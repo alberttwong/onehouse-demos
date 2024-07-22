@@ -36,6 +36,8 @@ services:
      - CONFIG_STORAGE_TOPIC=my_connect_configs
      - OFFSET_STORAGE_TOPIC=my_connect_offsets
      - STATUS_STORAGE_TOPIC=my_connect_statuses
+    volumes:
+     - ./kafka/connect/thirdparty:/kafka/connect/thirdparty
 
   metastore_db:
     image: postgres:11
