@@ -2,8 +2,10 @@
 https://github.com/debezium/debezium-examples/tree/main/tutorial
 
 # Start connector
-curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @register-postgres.json
-curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @kafka_connect_clickhouse.json
+## Register postgres
+`curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @register-postgres.json`
+## Clickhouse Sink
+`curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @kafka_connect_clickhouse.json`
 
 # Delete connector
 curl -i -X DELETE -H "Accept:application/json" localhost:8083/connectors/clickhouse-connect
