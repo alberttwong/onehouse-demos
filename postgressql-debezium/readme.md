@@ -12,3 +12,6 @@ curl -i -X DELETE -H "Accept:application/json" localhost:8083/connectors/clickho
 
 # Debugging
 https://github.com/debezium/debezium-examples/tree/main/tutorial#debugging
+
+# Resources
+How to use with ngrok https://rmoff.net/2023/11/01/using-apache-kafka-with-ngrok/
