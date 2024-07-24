@@ -11,6 +11,9 @@ Sign up for an ngrok account at https://dashboard.ngrok.com/signup and get your 
 ### Register postgres
 `curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @register-postgres.json`
 
+## Get the Kafka broker address to put into Onehouse
+Execute `curl -s http://localhost:4040/api/tunnels/command_line` to get the URI of the kafka broker address.  Take that address and put it as a Onehouse Source - Kafka. 
+
 ## Debugging
 https://github.com/debezium/debezium-examples/tree/main/tutorial#debugging
 
