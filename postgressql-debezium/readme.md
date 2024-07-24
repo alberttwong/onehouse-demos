@@ -1,5 +1,4 @@
-# Tutorial
-This tutorial is based off of https://github.com/debezium/debezium-examples/tree/main/tutorial
+You can use this docker image to setup a OLTP CDC scenario into Onehouse. 
 
 # Get a ngrok auth token
 Sign up for an ngrok account at https://dashboard.ngrok.com/signup and get your auth-token from https://dashboard.ngrok.com/get-started/your-authtoken.  Write it in the .env file
@@ -17,4 +16,5 @@ curl -i -X DELETE -H "Accept:application/json" localhost:8083/connectors/clickho
 https://github.com/debezium/debezium-examples/tree/main/tutorial#debugging
 
 # Resources
-How to use with ngrok https://rmoff.net/2023/11/01/using-apache-kafka-with-ngrok/
+* Getting Apache Kafka to work with ngrok https://rmoff.net/2023/11/01/using-apache-kafka-with-ngrok/
+* This tutorial is based off of https://github.com/debezium/debezium-examples/tree/main/tutorial
