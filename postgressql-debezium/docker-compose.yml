@@ -2,6 +2,12 @@ version: "3"
 
 services:
 
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    command: tcp kafka:9092 --log stdout --authtoken $NGROK_AUTH_TOKEN
+    ports:
+      - 4040:4040 # Web dashboard for ngrok
   zookeeper:
     image: quay.io/debezium/zookeeper:2.7.0.Final
     ports:
@@ -11,11 +17,34 @@ services:
   kafka:
     image: quay.io/debezium/kafka:2.7.0.Final
     ports:
-     - 9092:9092
+     - 29092:29092
     links:
      - zookeeper
     environment:
      - ZOOKEEPER_CONNECT=zookeeper:2181
+     - KAFKA_LISTENERS=DOCKER://kafka:29092, NGROK://kafka:9092
+     - KAFKA_ADVERTISED_LISTENERS=DOCKER://kafka:29092
+     - KAFKA_INTER_BROKER_LISTENER_NAME=DOCKER
+     - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=DOCKER:PLAINTEXT,NGROK:PLAINTEXT
+    entrypoint: 
+      - /bin/sh 
+      - -c 
+      - |
+        echo "Waiting for ngrok tunnel to be created"
+        while : ; do
+          curl_status=$$(curl -s -o /dev/null -w %{http_code} http://ngrok:4040/api/tunnels/command_line)
+          echo -e $$(date) "\tTunnels API HTTP state: " $$curl_status " (waiting for 200)"
+          if [ $$curl_status -eq 200 ] ; then
+            break
+          fi
+          sleep 5 
+        done
+        echo "ngrok tunnel is up"
+        NGROK_LISTENER=$(curl -s  http://ngrok:4040/api/tunnels/command_line | grep -Po '"public_url":.*?[^\\]",' | cut -d':' -f2- | tr -d ',"' | sed 's/tcp:\/\//NGROK:\/\//g')
+        echo $$NGROK_LISTENER
+        export KAFKA_ADVERTISED_LISTENERS="$$KAFKA_ADVERTISED_LISTENERS, $$NGROK_LISTENER"
+        echo "KAFKA_ADVERTISED_LISTENERS is set to " $$KAFKA_ADVERTISED_LISTENERS
+        /docker-entrypoint.sh start
   postgres:
     image: quay.io/debezium/example-postgres:2.7.0.Final
     ports:
@@ -31,7 +60,7 @@ services:
      - kafka
      - postgres
     environment:
-     - BOOTSTRAP_SERVERS=kafka:9092
+     - BOOTSTRAP_SERVERS=kafka:29092
      - GROUP_ID=1
      - CONFIG_STORAGE_TOPIC=my_connect_configs
      - OFFSET_STORAGE_TOPIC=my_connect_offsets
