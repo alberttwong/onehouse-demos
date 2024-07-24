@@ -14,6 +14,8 @@ Sign up for an ngrok account at https://dashboard.ngrok.com/signup and get your 
 ## Get the Kafka broker address to put into Onehouse
 Execute `curl -s http://localhost:4040/api/tunnels/command_line` to get the URI of the kafka broker address.  Take that address and put it as a Onehouse Source - Kafka with PLAINTEXT security.
 
+You can also see the ngrok URI through the ngrok logs or the kafka logs within their container. 
+
 ## Debugging
 https://github.com/debezium/debezium-examples/tree/main/tutorial#debugging
 
