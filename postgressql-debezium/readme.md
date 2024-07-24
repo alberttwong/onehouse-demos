@@ -27,4 +27,4 @@ Instead of sinking the data into Onehouse, you can sink the data into a OLAP dat
 `curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @kafka_connect_clickhouse.json`
 
 ## Delete connector
-curl -i -X DELETE -H "Accept:application/json" localhost:8083/connectors/clickhouse-connect
+`curl -i -X DELETE -H "Accept:application/json" localhost:8083/connectors/clickhouse-connect`
