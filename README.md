@@ -13,9 +13,9 @@
   * [Community] Use Spark to write Delta Lake, have Apache xTable convert the format to Iceberg and Hudi, read the data using Trino
 
 ## Observability Demo    
-  * [Onehouse] Use Spark to write Hudi upload the metadata to Onehouse Lake View
-  * [Onehouse] Use Spark to write Iceberg, have Apache xTable convert to Hudi, upload the metadata to Onehouse Lake View
-  * [Onehouse] Use Spark to write Delta Lake, have Apache xTable convert to Hudi, upload the metadata to Onehouse Lake View
+  * [Onehouse LakeView] Use Spark to write Hudi upload the metadata to Onehouse Lake View
+  * [Onehouse LakeView] Use Spark to write Iceberg, have Apache xTable convert to Hudi, upload the metadata to Onehouse Lake View
+  * [Onehouse LakeView] Use Spark to write Delta Lake, have Apache xTable convert to Hudi, upload the metadata to Onehouse Lake View
 
 ## Visability into Kafka
 * conduktor
