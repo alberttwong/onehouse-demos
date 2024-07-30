@@ -4,10 +4,16 @@ services:
 
   ngrok:
     image: ngrok/ngrok:latest
-    container_name: ngrok
-    command: tcp kafka:9092 --log stdout --authtoken $NGROK_AUTH_TOKEN
+    restart: unless-stopped
+    command:
+      - "start"
+      - "--all"
+      - "--config"
+      - "/etc/ngrok.yml"
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
     ports:
-      - 4040:4040 # Web dashboard for ngrok
+      - 4040:4040
   zookeeper:
     image: quay.io/debezium/zookeeper:2.7.0.Final
     ports:
