@@ -2,12 +2,20 @@
 
 ## CDC Demo
 * postgressql-debezium
-  * postgres (with debezium configured) pushing messages into Kafka
+  * [Onehouse] postgres (with debezium configured) pushing messages into Kafka and Confluent Schema Registry to be picked up by Onehouse ingestion
+* mysql-debezium
+  * [Onehouse] mysql (with debezium configured) pushing messages into Kafka and Confluent Schema Registry to be picked up by Onehouse ingestion
 
 ## Query Demo
 * trino-prestodb-spark-minio
-  * Use Trino or PrestoDB to read Onehouse (iceberg, hudi, delta) and write data in OneHouse.  Also contains Apache xTable to translate open table format.
-  * Use Spark to write Iceberg, Hudi and/or Delta Lake and upload the metadata to Onehouse Lake View
+  * [Community] Use Spark to write Hudi, have Apache xTable convert the format to Iceberg and Delta Lake, read the data using Trino
+  * [Community] Use Spark to write Iceberg, have Apache xTable convert the format to Hudi and Delta Lake, read the data using Trino
+  * [Community] Use Spark to write Delta Lake, have Apache xTable convert the format to Iceberg and Hudi, read the data using Trino
+
+## Observability Demo    
+  * [Onehouse] Use Spark to write Hudi upload the metadata to Onehouse Lake View
+  * [Onehouse] Use Spark to write Iceberg, have Apache xTable convert to Hudi, upload the metadata to Onehouse Lake View
+  * [Onehouse] Use Spark to write Delta Lake, have Apache xTable convert to Hudi, upload the metadata to Onehouse Lake View
 
 ## Visability into Kafka
 * conduktor
