@@ -18,3 +18,5 @@ https://github.com/debezium/debezium-examples/tree/main/tutorial#debugging
 
 # Resources
 How to use with ngrok https://rmoff.net/2023/11/01/using-apache-kafka-with-ngrok/
+Setting auth in Confluent Schema Registry https://github.com/Dabz/kafka-security-playbook/tree/master/schema-registry/with-basic-auth
+Having Kafka Connect to Confluent Schema Registry using auth https://docs.confluent.io/platform/current/schema-registry/connect.html
