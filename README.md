@@ -2,9 +2,9 @@
 
 ## CDC Demo
 * postgressql-debezium
-  * [Onehouse] postgres (with debezium configured) pushing messages into Kafka and Confluent Schema Registry to be picked up by Onehouse ingestion
+  * [Onehouse] postgres (with debezium configured) pushing messages into Kafka and Confluent Schema Registry to be picked up by Onehouse ingestion (Confluent Cloud Kafka with AVRO)
 * mysql-debezium
-  * [Onehouse] mysql (with debezium configured) pushing messages into Kafka and Confluent Schema Registry to be picked up by Onehouse ingestion
+  * [Onehouse] mysql (with debezium configured) pushing messages into Kafka and Confluent Schema Registry to be picked up by Onehouse ingestion (Confluent Cloud Kafka with AVRO)
 
 ## Query Demo
 * trino-prestodb-spark-minio
