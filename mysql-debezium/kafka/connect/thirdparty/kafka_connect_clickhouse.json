@@ -1,0 +1,24 @@
+{
+  "name": "clickhouse-connect",
+  "config": {
+    "connector.class": "com.clickhouse.kafka.connect.ClickHouseSinkConnector",
+    "tasks.max": "1",
+    "consumer.override.max.poll.records": "5000",
+    "consumer.override.max.partition.fetch.bytes": "5242880",
+    "database": "default",
+    "errors.retry.timeout": "60",
+    "exactlyOnce": "false",
+    "hostname": "sfmtp3rq7x.us-west-2.aws.clickhouse.cloud",
+    "port": "8443",
+    "ssl": "true",
+    "jdbcConnectionProperties": "?ssl=true&sslmode=strict",
+    "username": "default",
+    "password": "hy.VRIfaomos9",
+    "topics": "dbserver1.inventory.customers",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+    "topic2TableMap": "dbserver1.inventory.customers=customer",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "clickhouseSettings": ""
+  }
+}
