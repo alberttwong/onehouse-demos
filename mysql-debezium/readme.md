@@ -2,7 +2,7 @@
 This tutorial is based off of https://github.com/debezium/debezium-examples/tree/main/tutorial
 
 # Get a ngrok auth token
-Sign up for an ngrok account at https://dashboard.ngrok.com/signup and get your auth-token from https://dashboard.ngrok.com/get-started/your-authtoken.  Write it in the .env file
+Sign up for an ngrok account at https://dashboard.ngrok.com/signup and get your auth-token from https://dashboard.ngrok.com/get-started/your-authtoken.  Write it in the docker-compose file
 
 # Start connector
 ## Register postgres
