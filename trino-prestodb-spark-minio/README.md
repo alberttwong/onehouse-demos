@@ -256,3 +256,36 @@ select * from iceberg.iceberg_db.people;
 ```
 ### Presto
 You can access the local Presto container by running `docker exec -it presto presto-cli --server localhost:8082`
+
+## Debug
+
+```
+trino> show schemas in hudi;
+       Schema       
+--------------------
+ default            
+ information_schema 
+ sales_default      
+(3 rows)
+
+Query 20240815_003243_00020_93hak, FINISHED, 1 node
+Splits: 19 total, 19 done (100.00%)
+0.58 [3 rows, 53B] [5 rows/s, 91B/s]
+
+trino> show tables in hudi.sales_default;
+        Table        
+---------------------
+ public_books_ro     
+ public_books_rt     
+ public_customers_ro 
+ public_customers_rt 
+ public_toys_ro      
+ public_toys_rt      
+ public_users_ro     
+ public_users_rt     
+(8 rows)
+
+Query 20240815_003315_00021_93hak, FINISHED, 1 node
+Splits: 19 total, 19 done (100.00%)
+0.50 [8 rows, 310B] [16 rows/s, 624B/s]
+```
