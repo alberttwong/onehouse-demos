@@ -1,0 +1,57 @@
+version: '2'
+services:
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    command:
+      - "start"
+      - "--all"
+      - "--config"
+      - "/etc/ngrok.yml"
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
+    ports:
+      - 4040:4040
+  zookeeper:
+    image: quay.io/debezium/zookeeper:${DEBEZIUM_VERSION}
+    ports:
+     - 2181:2181
+     - 2888:2888
+     - 3888:3888
+  kafka:
+    image: quay.io/debezium/kafka:${DEBEZIUM_VERSION}
+    ports:
+     - 29092:29092
+    links:
+     - zookeeper
+    environment:
+     - ZOOKEEPER_CONNECT=zookeeper:2181
+     - KAFKA_LISTENERS=DOCKER://kafka:29092, NGROK://kafka:9092
+     - KAFKA_ADVERTISED_LISTENERS=DOCKER://kafka:29092
+     - KAFKA_INTER_BROKER_LISTENER_NAME=DOCKER
+     - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=DOCKER:PLAINTEXT,NGROK:PLAINTEXT
+  mongodb:
+    image: quay.io/debezium/example-mongodb:${DEBEZIUM_VERSION}
+    hostname: mongodb
+    ports:
+     - 27017:27017
+    environment:
+     - MONGODB_USER=debezium
+     - MONGODB_PASSWORD=dbz
+  connect:
+    image: quay.io/debezium/connect:${DEBEZIUM_VERSION}
+    ports:
+     - 8083:8083
+    links:
+     - kafka
+     - mongodb
+    environment:
+     - BOOTSTRAP_SERVERS=kafka:29092
+     - GROUP_ID=1
+     - CONFIG_STORAGE_TOPIC=my_connect_configs
+     - OFFSET_STORAGE_TOPIC=my_connect_offsets
+     - STATUS_STORAGE_TOPIC=my_connect_statuses
+# For testing newer connector versions, unpack the connector archive into this
+# directory and uncomment the lines below
+#    volumes:
+#     - ./debezium-connector-mongodb:/kafka/connect/debezium-connector-mongodb
