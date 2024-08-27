@@ -1,0 +1,9 @@
+<<<<<<< HEAD
+spark/cache/
+spark/jars/*.jar
+kafka/connect/thirdparty/
+jars/*.jar
+lakeview/*.jar
+presto/node.properties
+=======
+>>>>>>> parent of bd893c4 (trino hudi config updates)
