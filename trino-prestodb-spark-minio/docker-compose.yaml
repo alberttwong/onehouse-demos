@@ -16,6 +16,57 @@
 #
 version: "3.9"
 services:
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    command:
+      - "start"
+      - "--all"
+      - "--config"
+      - "/etc/ngrok.yml"
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
+    ports:
+      - 4040:4040
+  zookeeper:
+    image: quay.io/debezium/zookeeper:2.7.0.Final
+    ports:
+     - 2181:2181
+     - 2888:2888
+     - 3888:3888
+  kafka:
+    image: quay.io/debezium/kafka:2.7.0.Final
+    ports:
+     - 29092:29092
+    links:
+     - zookeeper
+    environment:
+     - ZOOKEEPER_CONNECT=zookeeper:2181
+     - KAFKA_LISTENERS=DOCKER://kafka:29092, NGROK://kafka:9092
+     - KAFKA_ADVERTISED_LISTENERS=DOCKER://kafka:29092
+     - KAFKA_INTER_BROKER_LISTENER_NAME=DOCKER
+     - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=DOCKER:PLAINTEXT,NGROK:PLAINTEXT
+    entrypoint: 
+      - /bin/sh 
+      - -c 
+      - |
+        echo "Waiting for ngrok tunnel to be created"
+        while : ; do
+          curl_status=$$(curl -s -o /dev/null -w %{http_code} http://ngrok:4040/api/tunnels/kafka)
+          echo -e $$(date) "\tTunnels API HTTP state: " $$curl_status " (waiting for 200)"
+          if [ $$curl_status -eq 200 ] ; then
+            break
+          fi
+          sleep 5 
+        done
+        echo "ngrok tunnel is up"
+        NGROK_LISTENER=$(curl -s  http://ngrok:4040/api/tunnels/kafka | grep -Po '"public_url":.*?[^\\]",' | cut -d':' -f2- | tr -d ',"' | sed 's/tcp:\/\//NGROK:\/\//g')
+        echo $$NGROK_LISTENER
+        export KAFKA_ADVERTISED_LISTENERS="$$KAFKA_ADVERTISED_LISTENERS, $$NGROK_LISTENER"
+        echo "KAFKA_ADVERTISED_LISTENERS is set to " $$KAFKA_ADVERTISED_LISTENERS
+        /docker-entrypoint.sh start
+
   trino:
     container_name: trino
     hostname: trino
@@ -112,6 +163,7 @@ services:
       - ./spark/jars:/root/.ivy2/jars
       - ./spark/cache:/root/.ivy2/cache
       - ./lakeview:/opt/lakeview
+      - ./demo:/opt/demo
     entrypoint: >
       /bin/sh -c "
       tail -f /dev/null;
