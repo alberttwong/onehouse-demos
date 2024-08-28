@@ -26,7 +26,7 @@ ENV HIVE_HOME=/hive
 
 RUN set -ex; \
     apt-get update; \
-    apt-get install -y python3 python3-pip git vim; \
+    apt-get install -y python3 python3-pip git vim kafkacat jq; \
     rm -rf /var/lib/apt/lists/*
 
 RUN set -xeu; \
@@ -55,7 +55,7 @@ RUN adduser hive
 ENV PATH="${SPARK_HOME}/bin:${PATH}"
 
 RUN cd /opt && git clone https://github.com/apache/hudi.git 
-RUN /spark/bin/pyspark --packages com.amazonaws:aws-java-sdk-s3:1.12.661,org.apache.hadoop:hadoop-aws:3.3.1
+#RUN /spark/bin/pyspark --packages com.amazonaws:aws-java-sdk-s3:1.12.661,org.apache.hadoop:hadoop-aws:3.3.1
 
 EXPOSE 10213
 
