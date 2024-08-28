@@ -169,29 +169,6 @@ services:
       tail -f /dev/null;
       "
 
-  spark34:
-    container_name: spark34
-    hostname: spark34
-    image: 'atwong/openjdk-11-spark-3.4:0.1.1'
-    depends_on:
-      hive-metastore:
-        condition: service_healthy
-      minio:
-        condition: service_started
-    volumes:
-      - ./jars:/opt/xtable/jars
-      - ./spark/conf/spark-defaults.conf:/spark/conf/spark-defaults.conf:ro
-      - ./spark/conf/core-site.xml:/spark/conf/core-site.xml:ro
-      - ./spark/conf/core-site.xml:/hadoop/etc/hadoop/core-site.xml:ro
-      - ./spark/conf/hudi-defaults.conf:/etc/hudi/conf/hudi-defaults.conf:ro
-      - ./spark/jars34:/root/.ivy2/jars
-      - ./spark/cache34:/root/.ivy2/cache
-      - ./lakeview:/opt/lakeview
-    entrypoint: >
-      /bin/sh -c "
-      tail -f /dev/null;
-      "
-
   minio:
     image: minio/minio
     environment:
@@ -225,4 +202,4 @@ services:
 
 networks:
   default:
-     name: lakehouse
+     name: datalakehouse
