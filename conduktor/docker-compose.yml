@@ -17,7 +17,7 @@ services:
     depends_on:
       - postgresql
     ports:
-      - "8080:8080"
+      - "8089:8080"
     volumes:
       - conduktor_data:/var/conduktor
     environment:
@@ -30,7 +30,7 @@ services:
   conduktor-monitoring:
     image: conduktor/conduktor-console-cortex:1.24.1
     environment:
-      CDK_CONSOLE-URL: "http://conduktor-console:8080"
+      CDK_CONSOLE-URL: "http://conduktor-console:8089"
 volumes:
   pg_data: {}
   conduktor_data: {}
