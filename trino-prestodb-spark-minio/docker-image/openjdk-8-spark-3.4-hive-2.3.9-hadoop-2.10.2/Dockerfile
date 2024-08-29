@@ -11,7 +11,7 @@
 # limitations under the License.
 
 ARG ARCH
-FROM eclipse-temurin:11-jre-focal
+FROM eclipse-temurin:8-jre-focal
 
 ARG SPARK_VERSION=3.4.3
 ARG HADOOP_VERSION=3
@@ -19,6 +19,8 @@ ARG HADOOP_VERSION=3
 ARG SPARK_ARTIFACT="spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}"
 
 ENV SPARK_HOME=/spark
+ENV HADOOP_HOME=/hadoop
+ENV HIVE_HOME=/hive
 
 RUN set -ex; \
     apt-get update; \
@@ -31,12 +33,27 @@ RUN set -xeu; \
     rm ${SPARK_ARTIFACT}.tgz; \
     ln -sn /${SPARK_ARTIFACT} ${SPARK_HOME}
 
+RUN set -xeu; \
+    wget -nv "https://archive.apache.org/dist/hive/hive-2.3.9/apache-hive-2.3.9-bin.tar.gz"; \
+    tar -xf apache-hive-2.3.9-bin.tar.gz; \
+    rm apache-hive-2.3.9-bin.tar.gz; \
+    ln -sn /apache-hive-2.3.9-bin /hive
+
+RUN set -xeu; \
+    wget -nv "https://dlcdn.apache.org/hadoop/common/hadoop-2.10.2/hadoop-2.10.2.tar.gz"; \
+    tar -xf hadoop-2.10.2.tar.gz; \
+    rm hadoop-2.10.2.tar.gz; \ 
+    ln -sn /hadoop-2.10.2 /hadoop
+
 WORKDIR ${SPARK_HOME}/bin
 
-ENV PATH="${SPARK_HOME}/bin:${PATH}"
-ENV HUDI_CLASSPATH=/root/.ivy2/jars/*
+# Create Hive user to match Hive container
+RUN adduser hive
 
-RUN cd /opt && git clone https://github.com/apache/hudi.git
+ENV PATH="${SPARK_HOME}/bin:${PATH}"
+ENV HUDI_CLASSPATH=/root/.ivy2/jars/* 
+
+RUN cd /opt && git clone https://github.com/apache/hudi.git 
 
 EXPOSE 10213
 

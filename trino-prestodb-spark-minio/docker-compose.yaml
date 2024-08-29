@@ -148,7 +148,7 @@ services:
   spark:
     container_name: spark 
     hostname: spark
-    image: 'atwong/openjdk-11-spark-3.4-hive-2.3.10-hadoop-2.10.2:0.1.1'
+    image: 'atwong/openjdk-11-spark-3.4:0.1.1'
     depends_on:
       hive-metastore:
         condition: service_healthy
@@ -164,6 +164,32 @@ services:
       - ./spark/cache:/root/.ivy2/cache
       - ./lakeview:/opt/lakeview
       - ./demo:/opt/demo
+      - ./hudisync:/opt/hudisync
+    entrypoint: >
+      /bin/sh -c "
+      tail -f /dev/null;
+      "
+
+  openjdk8:
+    container_name: openjdk8
+    hostname: openjdk8
+    image: 'atwong/openjdk-8-spark-3.4-hive-2.3.9-hadoop-2.10.2:0.1.1'
+    depends_on:
+      hive-metastore:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    volumes:
+      - ./jars:/opt/xtable/jars
+      - ./spark/conf/spark-defaults.conf:/spark/conf/spark-defaults.conf:ro
+      - ./spark/conf/core-site.xml:/spark/conf/core-site.xml:ro
+      - ./spark/conf/core-site.xml:/hadoop/etc/hadoop/core-site.xml:ro
+      - ./spark/conf/hudi-defaults.conf:/etc/hudi/conf/hudi-defaults.conf:ro
+      - ./spark/jars:/root/.ivy2/jars
+      - ./spark/cache:/root/.ivy2/cache
+      - ./lakeview:/opt/lakeview
+      - ./demo:/opt/demo
+      - ./hudisync:/opt/hudisync
     entrypoint: >
       /bin/sh -c "
       tail -f /dev/null;
