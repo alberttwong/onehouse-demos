@@ -25,3 +25,4 @@
 * conduktor
   * Tool to see messages in Kafka topics
 
+<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=8ec31a01-3415-4e15-8d99-a9ab074590cd" />
