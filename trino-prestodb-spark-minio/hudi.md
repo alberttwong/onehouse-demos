@@ -7,11 +7,13 @@ The steps have been tested on a Mac laptop
 
 ### Prerequisites
 
-  * Docker Setup :  For Mac, Please follow the steps as defined in [Install Docker Desktop on Mac](https://docs.docker.com/desktop/install/mac-install/). 
+  * Docker Setup
     * Virtual disk limit: 200 GB
     * Memory limit: 8 GB
     * File Sharing: VirtioFS
     * [If using Mac ARM], Use Rosetta for x86_64/amd64 emulation on Apple Silicon: CHECKED
+  * ngrok
+    * Sign up for an account with ngrok, it will be used so that you can access your kafka cluster on the internet.  You will need an ngrok authtoken in the following steps.
     
 Also, this has not been tested on some environments like Docker on Windows.
 
@@ -23,6 +25,7 @@ Also, this has not been tested on some environments like Docker on Windows.
 This should pull the Docker images from Docker hub and setup the Docker cluster.
 
 ```
+export NGROK_AUTHTOKEN=XXXXXX
 docker compose up
 ```
 
@@ -73,16 +76,17 @@ To check if the new topic shows up, use
 kafkacat -b kafka -L -J | jq .
 {
   "originating_broker": {
-    "id": 1001,
-    "name": "kafka:9092/1001"
+    "id": -1,
+    "name": "kafka:9092/bootstrap"
   },
   "query": {
     "topic": "*"
   },
+  "controllerid": 1,
   "brokers": [
     {
-      "id": 1001,
-      "name": "kafka:9092"
+      "id": 1,
+      "name": "6.tcp.us-cal-1.ngrok.io:17553"
     }
   ],
   "topics": [
@@ -91,15 +95,15 @@ kafkacat -b kafka -L -J | jq .
       "partitions": [
         {
           "partition": 0,
-          "leader": 1001,
+          "leader": 1,
           "replicas": [
             {
-              "id": 1001
+              "id": 1
             }
           ],
           "isrs": [
             {
-              "id": 1001
+              "id": 1
             }
           ]
         }
