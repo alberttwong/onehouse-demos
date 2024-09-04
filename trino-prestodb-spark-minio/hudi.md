@@ -818,47 +818,47 @@ Time taken: 0.199 seconds, Fetched 1 row(s)
 ### Step 7 (b): Incremental Query with Spark Shell:
 
 ```java
-docker exec -it adhoc-1 /bin/bash
-$SPARK_INSTALL/bin/spark-shell \
-  --jars $HUDI_SPARK_BUNDLE \
-  --driver-class-path $HADOOP_CONF_DIR \
-  --conf spark.sql.hive.convertMetastoreParquet=false \
-  --deploy-mode client \
-  --driver-memory 1G \
-  --master local[2] \
-  --executor-memory 3G \
-  --num-executors 1
+docker exec -it spark /bin/bash
+
+spark-shell --packages org.apache.hudi:hudi-utilities-slim-bundle_2.12:0.15.0,org.apache.hudi:hudi-spark3.4-bundle_2.12:0.15.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 \
+--conf 'spark.serializer=org.apache.spark.serializer.KryoSerializer' \
+--conf 'spark.sql.catalog.spark_catalog=org.apache.spark.sql.hudi.catalog.HoodieCatalog' \
+--conf 'spark.sql.extensions=org.apache.spark.sql.hudi.HoodieSparkSessionExtension' \
+--conf 'spark.kryo.registrator=org.apache.spark.HoodieSparkKryoRegistrar'
+
 
 Welcome to
       ____              __
      / __/__  ___ _____/ /__
     _\ \/ _ \/ _ `/ __/  '_/
-   /___/ .__/\_,_/_/ /_/\_\   version 2.4.4
+   /___/ .__/\_,_/_/ /_/\_\   version 3.4.3
       /_/
 
-Using Scala version 2.11.12 (OpenJDK 64-Bit Server VM, Java 1.8.0_212)
+Using Scala version 2.12.17 (OpenJDK 64-Bit Server VM, Java 11.0.24)
 Type in expressions to have them evaluated.
 Type :help for more information.
 
 scala> import org.apache.hudi.DataSourceReadOptions
 import org.apache.hudi.DataSourceReadOptions
 
-# In the below query, 20180925045257 is the first commit's timestamp
-scala> val hoodieIncViewDF =  spark.read.format("org.apache.hudi").option(DataSourceReadOptions.QUERY_TYPE_OPT_KEY, DataSourceReadOptions.QUERY_TYPE_INCREMENTAL_OPT_VAL).option(DataSourceReadOptions.BEGIN_INSTANTTIME_OPT_KEY, "20180924064621").load("/user/hive/warehouse/stock_ticks_cow")
-SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
-SLF4J: Defaulting to no-operation (NOP) logger implementation
-SLF4J: See http://www.slf4j.org/codes#StaticLoggerBinder for further details.
+scala> val hoodieIncViewDF =  spark.read.format("org.apache.hudi").option(DataSourceReadOptions.QUERY_TYPE_OPT_KEY, DataSourceReadOptions.QUERY_TYPE_INCREMENTAL_OPT_VAL).option(DataSourceReadOptions.BEGIN_INSTANTTIME_OPT_KEY, "20240904122742622").load("s3a://warehouse/stock_ticks_cow")
+24/09/04 13:34:10 WARN MetricsConfig: Cannot locate configuration: tried hadoop-metrics2-s3a-file-system.properties,hadoop-metrics2.properties
+24/09/04 13:34:10 WARN DFSPropertiesConfiguration: Cannot find HUDI_CONF_DIR, please set it as the dir of hudi-defaults.conf
 hoodieIncViewDF: org.apache.spark.sql.DataFrame = [_hoodie_commit_time: string, _hoodie_commit_seqno: string ... 15 more fields]
 
 scala> hoodieIncViewDF.registerTempTable("stock_ticks_cow_incr_tmp1")
-warning: there was one deprecation warning; re-run with -deprecation for details
+warning: one deprecation (since 2.0.0); for details, enable `:setting -deprecation' or `:replay -deprecation'
 
 scala> spark.sql("select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_cow_incr_tmp1 where  symbol = 'GOOG'").show(100, false);
-+----------------------+---------+----------------------+---------+------------+-----------+
-| _hoodie_commit_time  | symbol  |          ts          | volume  |    open    |   close   |
-+----------------------+---------+----------------------+---------+------------+-----------+
-| 20180924065039       | GOOG    | 2018-08-31 10:59:00  | 9021    | 1227.1993  | 1227.215  |
-+----------------------+---------+----------------------+---------+------------+-----------+
++-------------------+------+-------------------+------+---------+--------+
+|_hoodie_commit_time|symbol|ts                 |volume|open     |close   |
++-------------------+------+-------------------+------+---------+--------+
+|20240904130113388  |GOOG  |2018-08-31 10:59:00|9021  |1227.1993|1227.215|
++-------------------+------+-------------------+------+---------+--------+
+
+scala> :quit
+
+exit
 ```
 
 ### Step 8: Schedule and Run Compaction for Merge-On-Read table
@@ -867,8 +867,9 @@ Lets schedule and run a compaction to create a new version of columnar  file so 
 Again, You can use Hudi CLI to manually schedule and run compaction
 
 ```java
-docker exec -it adhoc-1 /bin/bash
-root@adhoc-1:/opt# /var/hoodie/ws/hudi-cli/hudi-cli.sh
+docker exec -it openjdk8 /bin/bash
+
+root@adhoc-1:/opt# /opt/hudi/hudi-cli/hudi-cli.sh
 ...
 Table command getting loaded
 HoodieSplashScreen loaded
