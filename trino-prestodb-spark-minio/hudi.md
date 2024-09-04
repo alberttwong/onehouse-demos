@@ -290,7 +290,7 @@ spark-sql (default)> exit;
 exit
 ```
 
-### Step 4 (b): Run Spark-Shell Queries
+### Step 4 (b): Run Queries with Spark-Shell
 Hudi support Spark as query processor just like Hive. Here are the same hive queries running in spark-shell
 
 ```java
@@ -511,31 +511,32 @@ Upload the second batch of data and ingest this batch using Hudi Streamer. As th
 partitions, there is no need to run hive-sync
 
 ```java
-cat docker/demo/data/batch_2.json | kcat -b kafkabroker -t stock_ticks -P
+docker exec -it spark /bin/bash
 
-# Within Docker container, run the ingestion command
-docker exec -it adhoc-2 /bin/bash
+cat /opt/demo/data/batch_2.json | kafkacat -b kafka:9092 -t stock_ticks -P
 
-# Run the following spark-submit command to execute the Hudi Streamer and ingest to stock_ticks_cow table in HDFS
+# Run the following spark-submit command to execute the Hudi Streamer and ingest to stock_ticks_cow table in S3
 spark-submit \
-  --class org.apache.hudi.utilities.streamer.HoodieStreamer $HUDI_UTILITIES_BUNDLE \
+  --packages org.apache.hudi:hudi-utilities-slim-bundle_2.12:0.15.0,org.apache.hudi:hudi-spark3.4-bundle_2.12:0.15.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 \
+  --class org.apache.hudi.utilities.streamer.HoodieStreamer org.apache.hudi_hudi-utilities-slim-bundle_2.12-0.15.0.jar \
   --table-type COPY_ON_WRITE \
   --source-class org.apache.hudi.utilities.sources.JsonKafkaSource \
-  --source-ordering-field ts \
-  --target-base-path /user/hive/warehouse/stock_ticks_cow \
+  --source-ordering-field ts  \
+  --target-base-path s3a://warehouse/stock_ticks_cow \
   --target-table stock_ticks_cow \
-  --props /var/demo/config/kafka-source.properties \
+  --props file:///opt/demo/config/kafka-source.properties \
   --schemaprovider-class org.apache.hudi.utilities.schema.FilebasedSchemaProvider
 
-# Run the following spark-submit command to execute the Hudi Streamer and ingest to stock_ticks_mor table in HDFS
-spark-submit \
-  --class org.apache.hudi.utilities.streamer.HoodieStreamer $HUDI_UTILITIES_BUNDLE \
+# Run the following spark-submit command to execute the Hudi Streamer and ingest to stock_ticks_mor table in S3
+  spark-submit \
+  --packages org.apache.hudi:hudi-utilities-slim-bundle_2.12:0.15.0,org.apache.hudi:hudi-spark3.4-bundle_2.12:0.15.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 \
+  --class org.apache.hudi.utilities.streamer.HoodieStreamer org.apache.hudi_hudi-utilities-slim-bundle_2.12-0.15.0.jar \
   --table-type MERGE_ON_READ \
   --source-class org.apache.hudi.utilities.sources.JsonKafkaSource \
   --source-ordering-field ts \
-  --target-base-path /user/hive/warehouse/stock_ticks_mor \
+  --target-base-path s3a://warehouse/stock_ticks_mor \
   --target-table stock_ticks_mor \
-  --props /var/demo/config/kafka-source.properties \
+  --props file:///opt/demo/config/kafka-source.properties \
   --schemaprovider-class org.apache.hudi.utilities.schema.FilebasedSchemaProvider \
   --disable-compaction
 
@@ -543,12 +544,12 @@ exit
 ```
 
 With Copy-On-Write table, the second ingestion by Hudi Streamer resulted in a new version of Parquet file getting created.
-See `http://namenode:50070/explorer.html#/user/hive/warehouse/stock_ticks_cow/2018/08/31`
+See `http://localhost:9001/browser/warehouse/stock_ticks_cow%2F2018%2F08%2F31%2F`
 
 With Merge-On-Read table, the second ingestion merely appended the batch to an unmerged delta (log) file.
-Take a look at the HDFS filesystem to get an idea: `http://namenode:50070/explorer.html#/user/hive/warehouse/stock_ticks_mor/2018/08/31`
+Take a look at the S3 filesystem to get an idea: `http://localhost:9001/browser/warehouse/stock_ticks_mor%2F2018%2F08%2F31%2F`
 
-### Step 6 (a): Run Hive Queries
+### Step 6 (a): Run Queries
 
 With Copy-On-Write table, the Snapshot query immediately sees the changes as part of second batch once the batch
 got committed as each ingestion creates newer versions of parquet files.
@@ -559,29 +560,25 @@ return "10:29 am" as it will only read from the Parquet file. Snapshot query wil
 latest committed data which is "10:59 a.m".
 
 ```java
-docker exec -it adhoc-2 /bin/bash
-beeline -u jdbc:hive2://hiveserver:10000 \
-  --hiveconf hive.input.format=org.apache.hadoop.hive.ql.io.HiveInputFormat \
-  --hiveconf hive.stats.autogather=false
+docker exec -it spark /bin/bash
+
+spark-sql --packages org.apache.hudi:hudi-utilities-slim-bundle_2.12:0.15.0,org.apache.hudi:hudi-spark3.4-bundle_2.12:0.15.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 \
+--conf 'spark.serializer=org.apache.spark.serializer.KryoSerializer' \
+--conf 'spark.sql.catalog.spark_catalog=org.apache.spark.sql.hudi.catalog.HoodieCatalog' \
+--conf 'spark.sql.extensions=org.apache.spark.sql.hudi.HoodieSparkSessionExtension' \
+--conf 'spark.kryo.registrator=org.apache.spark.HoodieSparkKryoRegistrar'
+
 
 # Copy On Write Table:
 
-0: jdbc:hive2://hiveserver:10000> select symbol, max(ts) from stock_ticks_cow group by symbol HAVING symbol = 'GOOG';
-WARNING: Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
-+---------+----------------------+--+
-| symbol  |         _c1          |
-+---------+----------------------+--+
-| GOOG    | 2018-08-31 10:59:00  |
-+---------+----------------------+--+
-1 row selected (1.932 seconds)
+spark-sql (default)> select symbol, max(ts) from stock_ticks_cow group by symbol HAVING symbol = 'GOOG';
+GOOG	2018-08-31 10:59:00
+Time taken: 3.263 seconds, Fetched 1 row(s)
 
-0: jdbc:hive2://hiveserver:10000> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_cow where  symbol = 'GOOG';
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| _hoodie_commit_time  | symbol  |          ts          | volume  |    open    |   close   |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| 20180924221953       | GOOG    | 2018-08-31 09:59:00  | 6330    | 1230.5     | 1230.02   |
-| 20180924224524       | GOOG    | 2018-08-31 10:59:00  | 9021    | 1227.1993  | 1227.215  |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
+spark-sql (default)> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_cow where  symbol = 'GOOG';
+20240904122742622	GOOG	2018-08-31 09:59:00	6330	1230.5	1230.02
+20240904130113388	GOOG	2018-08-31 10:59:00	9021	1227.1993	1227.215
+Time taken: 0.155 seconds, Fetched 2 row(s)
 
 As you can notice, the above queries now reflect the changes that came as part of ingesting second batch.
 
@@ -589,58 +586,42 @@ As you can notice, the above queries now reflect the changes that came as part o
 # Merge On Read Table:
 
 # Read Optimized Query
-0: jdbc:hive2://hiveserver:10000> select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG';
-WARNING: Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
-+---------+----------------------+--+
-| symbol  |         _c1          |
-+---------+----------------------+--+
-| GOOG    | 2018-08-31 10:29:00  |
-+---------+----------------------+--+
-1 row selected (1.6 seconds)
+spark-sql (default)> select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG';
+GOOG	2018-08-31 10:29:00
+Time taken: 0.452 seconds, Fetched 1 row(s)
 
-0: jdbc:hive2://hiveserver:10000> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG';
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| _hoodie_commit_time  | symbol  |          ts          | volume  |    open    |   close   |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| 20180924222155       | GOOG    | 2018-08-31 09:59:00  | 6330    | 1230.5     | 1230.02   |
-| 20180924222155       | GOOG    | 2018-08-31 10:29:00  | 3391    | 1230.1899  | 1230.085  |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
+spark-sql (default)> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG';
+20240904123001395	GOOG	2018-08-31 09:59:00	6330	1230.5	1230.02
+20240904123001395	GOOG	2018-08-31 10:29:00	3391	1230.1899	1230.085
+Time taken: 0.112 seconds, Fetched 2 row(s)
 
 # Snapshot Query
-0: jdbc:hive2://hiveserver:10000> select symbol, max(ts) from stock_ticks_mor_rt group by symbol HAVING symbol = 'GOOG';
-WARNING: Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
-+---------+----------------------+--+
-| symbol  |         _c1          |
-+---------+----------------------+--+
-| GOOG    | 2018-08-31 10:59:00  |
-+---------+----------------------+--+
+spark-sql (default)> select symbol, max(ts) from stock_ticks_mor_rt group by symbol HAVING symbol = 'GOOG';
+GOOG	2018-08-31 10:59:00
+Time taken: 0.978 seconds, Fetched 1 row(s)
 
-0: jdbc:hive2://hiveserver:10000> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_rt where  symbol = 'GOOG';
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| _hoodie_commit_time  | symbol  |          ts          | volume  |    open    |   close   |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| 20180924222155       | GOOG    | 2018-08-31 09:59:00  | 6330    | 1230.5     | 1230.02   |
-| 20180924224537       | GOOG    | 2018-08-31 10:59:00  | 9021    | 1227.1993  | 1227.215  |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
+spark-sql (default)> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_rt where  symbol = 'GOOG';
+20240904123001395	GOOG	2018-08-31 09:59:00	6330	1230.5	1230.02
+20240904130127262	GOOG	2018-08-31 10:59:00	9021	1227.1993	1227.215
+Time taken: 0.215 seconds, Fetched 2 row(s)
+
+spark-sql (default)> exit;
 
 exit
 ```
 
-### Step 6 (b): Run Spark SQL Queries
+### Step 6 (b): Run Spark Shell Queries
 
-Running the same queries in Spark-SQL:
+Running the same queries in Spark-Shell:
 
 ```java
-docker exec -it adhoc-1 /bin/bash
-$SPARK_INSTALL/bin/spark-shell \
-  --jars $HUDI_SPARK_BUNDLE \
-  --driver-class-path $HADOOP_CONF_DIR \
-  --conf spark.sql.hive.convertMetastoreParquet=false \
-  --deploy-mode client \
-  --driver-memory 1G \
-  --master local[2] \
-  --executor-memory 3G \
-  --num-executors 1
+docker exec -it spark /bin/bash
+
+spark-shell --packages org.apache.hudi:hudi-utilities-slim-bundle_2.12:0.15.0,org.apache.hudi:hudi-spark3.4-bundle_2.12:0.15.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 \
+--conf 'spark.serializer=org.apache.spark.serializer.KryoSerializer' \
+--conf 'spark.sql.catalog.spark_catalog=org.apache.spark.sql.hudi.catalog.HoodieCatalog' \
+--conf 'spark.sql.extensions=org.apache.spark.sql.hudi.HoodieSparkSessionExtension' \
+--conf 'spark.kryo.registrator=org.apache.spark.HoodieSparkKryoRegistrar'
 
 # Copy On Write Table:
 
@@ -651,14 +632,14 @@ scala> spark.sql("select symbol, max(ts) from stock_ticks_cow group by symbol HA
 |GOOG  |2018-08-31 10:59:00|
 +------+-------------------+
 
-scala> spark.sql("select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_cow where  symbol = 'GOOG'").show(100, false)
 
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| _hoodie_commit_time  | symbol  |          ts          | volume  |    open    |   close   |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| 20180924221953       | GOOG    | 2018-08-31 09:59:00  | 6330    | 1230.5     | 1230.02   |
-| 20180924224524       | GOOG    | 2018-08-31 10:59:00  | 9021    | 1227.1993  | 1227.215  |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
+scala> spark.sql("select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_cow where  symbol = 'GOOG'").show(100, false)
++-------------------+------+-------------------+------+---------+--------+
+|_hoodie_commit_time|symbol|ts                 |volume|open     |close   |
++-------------------+------+-------------------+------+---------+--------+
+|20240904122742622  |GOOG  |2018-08-31 09:59:00|6330  |1230.5   |1230.02 |
+|20240904130113388  |GOOG  |2018-08-31 10:59:00|9021  |1227.1993|1227.215|
++-------------------+------+-------------------+------+---------+--------+
 
 As you can notice, the above queries now reflect the changes that came as part of ingesting second batch.
 
@@ -667,141 +648,77 @@ As you can notice, the above queries now reflect the changes that came as part o
 
 # Read Optimized Query
 scala> spark.sql("select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG'").show(100, false)
-+---------+----------------------+
-| symbol  |         _c1          |
-+---------+----------------------+
-| GOOG    | 2018-08-31 10:29:00  |
-+---------+----------------------+
-1 row selected (1.6 seconds)
++------+-------------------+
+|symbol|max(ts)            |
++------+-------------------+
+|GOOG  |2018-08-31 10:29:00|
++------+-------------------+
 
 scala> spark.sql("select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG'").show(100, false)
-+----------------------+---------+----------------------+---------+------------+-----------+
-| _hoodie_commit_time  | symbol  |          ts          | volume  |    open    |   close   |
-+----------------------+---------+----------------------+---------+------------+-----------+
-| 20180924222155       | GOOG    | 2018-08-31 09:59:00  | 6330    | 1230.5     | 1230.02   |
-| 20180924222155       | GOOG    | 2018-08-31 10:29:00  | 3391    | 1230.1899  | 1230.085  |
-+----------------------+---------+----------------------+---------+------------+-----------+
++-------------------+------+-------------------+------+---------+--------+
+|_hoodie_commit_time|symbol|ts                 |volume|open     |close   |
++-------------------+------+-------------------+------+---------+--------+
+|20240904123001395  |GOOG  |2018-08-31 09:59:00|6330  |1230.5   |1230.02 |
+|20240904123001395  |GOOG  |2018-08-31 10:29:00|3391  |1230.1899|1230.085|
++-------------------+------+-------------------+------+---------+--------+
+
 
 # Snapshot Query
 scala> spark.sql("select symbol, max(ts) from stock_ticks_mor_rt group by symbol HAVING symbol = 'GOOG'").show(100, false)
-+---------+----------------------+
-| symbol  |         _c1          |
-+---------+----------------------+
-| GOOG    | 2018-08-31 10:59:00  |
-+---------+----------------------+
+org.apache.hudi.org.openjdk.jol.vm.sa.SASupportException: Sense failed., org.apache.hudi.org.openjdk.jol.vm.sa.SASupportException: Sense failed.]
++------+-------------------+
+|symbol|max(ts)            |
++------+-------------------+
+|GOOG  |2018-08-31 10:59:00|
++------+-------------------+
 
 scala> spark.sql("select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_rt where  symbol = 'GOOG'").show(100, false)
-+----------------------+---------+----------------------+---------+------------+-----------+
-| _hoodie_commit_time  | symbol  |          ts          | volume  |    open    |   close   |
-+----------------------+---------+----------------------+---------+------------+-----------+
-| 20180924222155       | GOOG    | 2018-08-31 09:59:00  | 6330    | 1230.5     | 1230.02   |
-| 20180924224537       | GOOG    | 2018-08-31 10:59:00  | 9021    | 1227.1993  | 1227.215  |
-+----------------------+---------+----------------------+---------+------------+-----------+
++-------------------+------+-------------------+------+---------+--------+
+|_hoodie_commit_time|symbol|ts                 |volume|open     |close   |
++-------------------+------+-------------------+------+---------+--------+
+|20240904123001395  |GOOG  |2018-08-31 09:59:00|6330  |1230.5   |1230.02 |
+|20240904130127262  |GOOG  |2018-08-31 10:59:00|9021  |1227.1993|1227.215|
++-------------------+------+-------------------+------+---------+--------+
+
+scala> :quit
 
 exit
 ```
 
-### Step 6 (c): Run Presto Queries
-
-Running the same queries on Presto for ReadOptimized queries. 
-
-:::note
-This section of the demo is not supported for Mac AArch64 users at this time.
-:::
-
-```java
-docker exec -it presto-worker-1 presto --server presto-coordinator-1:8090
-presto> use hive.default;
-USE
-
-# Copy On Write Table:
-
-presto:default>select symbol, max(ts) from stock_ticks_cow group by symbol HAVING symbol = 'GOOG';
- symbol |        _col1
---------+---------------------
- GOOG   | 2018-08-31 10:59:00
-(1 row)
-
-Query 20190822_181530_00007_segyw, FINISHED, 1 node
-Splits: 49 total, 49 done (100.00%)
-0:02 [197 rows, 613B] [125 rows/s, 389B/s]
-
-presto:default>select "_hoodie_commit_time", symbol, ts, volume, open, close  from stock_ticks_cow where  symbol = 'GOOG';
- _hoodie_commit_time | symbol |         ts          | volume |   open    |  close
----------------------+--------+---------------------+--------+-----------+----------
- 20190822180221      | GOOG   | 2018-08-31 09:59:00 |   6330 |    1230.5 |  1230.02
- 20190822181433      | GOOG   | 2018-08-31 10:59:00 |   9021 | 1227.1993 | 1227.215
-(2 rows)
-
-Query 20190822_181545_00008_segyw, FINISHED, 1 node
-Splits: 17 total, 17 done (100.00%)
-0:02 [197 rows, 613B] [106 rows/s, 332B/s]
-
-As you can notice, the above queries now reflect the changes that came as part of ingesting second batch.
-
-
-# Merge On Read Table:
-
-# Read Optimized Query
-presto:default> select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG';
- symbol |        _col1
---------+---------------------
- GOOG   | 2018-08-31 10:29:00
-(1 row)
-
-Query 20190822_181602_00009_segyw, FINISHED, 1 node
-Splits: 49 total, 49 done (100.00%)
-0:01 [197 rows, 613B] [139 rows/s, 435B/s]
-
-presto:default>select "_hoodie_commit_time", symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG';
- _hoodie_commit_time | symbol |         ts          | volume |   open    |  close
----------------------+--------+---------------------+--------+-----------+----------
- 20190822180250      | GOOG   | 2018-08-31 09:59:00 |   6330 |    1230.5 |  1230.02
- 20190822180250      | GOOG   | 2018-08-31 10:29:00 |   3391 | 1230.1899 | 1230.085
-(2 rows)
-
-Query 20190822_181615_00010_segyw, FINISHED, 1 node
-Splits: 17 total, 17 done (100.00%)
-0:01 [197 rows, 613B] [154 rows/s, 480B/s]
-
-presto:default> exit
-```
-
-### Step 6 (d): Run Trino Queries
+### Step 6 (c): Run Trino Queries
 
 Running the same queries on Trino for Read-Optimized queries.
 
-:::note
-This section of the demo is not supported for Mac AArch64 users at this time.
-:::
-
 ```java
-docker exec -it adhoc-2 trino --server trino-coordinator-1:8091
-trino> use hive.default;
+docker exec -it trino /bin/bash
+
+trino
+
+trino> use hudi.default;
 USE
     
 # Copy On Write Table:
 
 trino:default> select symbol, max(ts) from stock_ticks_cow group by symbol HAVING symbol = 'GOOG';
- symbol |        _col1        
+ symbol |        _col1
 --------+---------------------
- GOOG   | 2018-08-31 10:59:00 
+ GOOG   | 2018-08-31 10:59:00
 (1 row)
 
-Query 20220112_055443_00012_sac73, FINISHED, 1 node
-Splits: 49 total, 49 done (100.00%)
-0.63 [197 rows, 442KB] [310 rows/s, 697KB/s]
+Query 20240904_132409_00014_dyubr, FINISHED, 1 node
+Splits: 33 total, 33 done (100.00%)
+1.14 [197 rows, 474KB] [173 rows/s, 417KB/s]
 
 trino:default> select "_hoodie_commit_time", symbol, ts, volume, open, close  from stock_ticks_cow where  symbol = 'GOOG';
- _hoodie_commit_time | symbol |         ts          | volume |   open    |  close   
+ _hoodie_commit_time | symbol |         ts          | volume |   open    |  close
 ---------------------+--------+---------------------+--------+-----------+----------
- 20220112054822108   | GOOG   | 2018-08-31 09:59:00 |   6330 |    1230.5 |  1230.02 
- 20220112055352654   | GOOG   | 2018-08-31 10:59:00 |   9021 | 1227.1993 | 1227.215 
+ 20240904122742622   | GOOG   | 2018-08-31 09:59:00 |   6330 |    1230.5 |  1230.02
+ 20240904130113388   | GOOG   | 2018-08-31 10:59:00 |   9021 | 1227.1993 | 1227.215
 (2 rows)
 
-Query 20220112_055450_00013_sac73, FINISHED, 1 node
-Splits: 17 total, 17 done (100.00%)
-0.65 [197 rows, 450KB] [303 rows/s, 692KB/s]
+Query 20240904_132423_00015_dyubr, FINISHED, 1 node
+Splits: 1 total, 1 done (100.00%)
+0.88 [197 rows, 481KB] [223 rows/s, 546KB/s]
 
 As you can notice, the above queries now reflect the changes that came as part of ingesting second batch.
 
@@ -809,27 +726,29 @@ As you can notice, the above queries now reflect the changes that came as part o
 # Read Optimized Query
     
 trino:default> select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG';
- symbol |        _col1        
+ symbol |        _col1
 --------+---------------------
- GOOG   | 2018-08-31 10:29:00 
+ GOOG   | 2018-08-31 10:29:00
 (1 row)
 
-Query 20220112_055500_00014_sac73, FINISHED, 1 node
-Splits: 49 total, 49 done (100.00%)
-0.59 [197 rows, 442KB] [336 rows/s, 756KB/s]
+Query 20240904_132439_00016_dyubr, FINISHED, 1 node
+Splits: 33 total, 33 done (100.00%)
+0.88 [197 rows, 474KB] [223 rows/s, 538KB/s]
 
 trino:default> select "_hoodie_commit_time", symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG';
- _hoodie_commit_time | symbol |         ts          | volume |   open    |  close   
+ _hoodie_commit_time | symbol |         ts          | volume |   open    |  close
 ---------------------+--------+---------------------+--------+-----------+----------
- 20220112054844841   | GOOG   | 2018-08-31 09:59:00 |   6330 |    1230.5 |  1230.02 
- 20220112054844841   | GOOG   | 2018-08-31 10:29:00 |   3391 | 1230.1899 | 1230.085 
+ 20240904123001395   | GOOG   | 2018-08-31 09:59:00 |   6330 |    1230.5 |  1230.02
+ 20240904123001395   | GOOG   | 2018-08-31 10:29:00 |   3391 | 1230.1899 | 1230.085
 (2 rows)
 
-Query 20220112_055506_00015_sac73, FINISHED, 1 node
-Splits: 17 total, 17 done (100.00%)
-0.35 [197 rows, 450KB] [556 rows/s, 1.24MB/s]
+Query 20240904_132451_00017_dyubr, FINISHED, 1 node
+Splits: 1 total, 1 done (100.00%)
+0.87 [197 rows, 481KB] [225 rows/s, 552KB/s]
 
 trino:default> exit
+
+exit
 ```
 
 ### Step 7 (a): Incremental Query for COPY-ON-WRITE Table
@@ -839,60 +758,64 @@ With 2 batches of data ingested, lets showcase the support for incremental queri
 Lets take the same projection query example
 
 ```java
-docker exec -it adhoc-2 /bin/bash
-beeline -u jdbc:hive2://hiveserver:10000 \
-  --hiveconf hive.input.format=org.apache.hadoop.hive.ql.io.HiveInputFormat \
-  --hiveconf hive.stats.autogather=false
+docker exec -it spark /bin/bash
 
-0: jdbc:hive2://hiveserver:10000> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_cow where  symbol = 'GOOG';
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| _hoodie_commit_time  | symbol  |          ts          | volume  |    open    |   close   |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| 20180924064621       | GOOG    | 2018-08-31 09:59:00  | 6330    | 1230.5     | 1230.02   |
-| 20180924065039       | GOOG    | 2018-08-31 10:59:00  | 9021    | 1227.1993  | 1227.215  |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
+spark-sql --packages org.apache.hudi:hudi-utilities-slim-bundle_2.12:0.15.0,org.apache.hudi:hudi-spark3.4-bundle_2.12:0.15.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 \
+--conf 'spark.serializer=org.apache.spark.serializer.KryoSerializer' \
+--conf 'spark.sql.catalog.spark_catalog=org.apache.spark.sql.hudi.catalog.HoodieCatalog' \
+--conf 'spark.sql.extensions=org.apache.spark.sql.hudi.HoodieSparkSessionExtension' \
+--conf 'spark.kryo.registrator=org.apache.spark.HoodieSparkKryoRegistrar'
+
+spark-sql (default)> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_cow where  symbol = 'GOOG';
+20240904122742622	GOOG	2018-08-31 09:59:00	6330	1230.5	1230.02
+20240904130113388	GOOG	2018-08-31 10:59:00	9021	1227.1993	1227.215
+Time taken: 2.913 seconds, Fetched 2 row(s)
 ```
 
-As you notice from the above queries, there are 2 commits - 20180924064621 and 20180924065039 in timeline order.
+As you notice from the above queries, there are 2 commits - 20240904122742622 and 20240904130113388 in timeline order.
 When you follow the steps, you will be getting different timestamps for commits. Substitute them
 in place of the above timestamps.
 
 To show the effects of incremental-query, let us assume that a reader has already seen the changes as part of
 ingesting first batch. Now, for the reader to see effect of the second batch, he/she has to keep the start timestamp to
-the commit time of the first batch (20180924064621) and run incremental query
+the commit time of the first batch (20240904122742622) and run incremental query
 
 Hudi incremental mode provides efficient scanning for incremental queries by filtering out files that do not have any
 candidate rows using hudi-managed metadata.
 
 ```java
-docker exec -it adhoc-2 /bin/bash
-beeline -u jdbc:hive2://hiveserver:10000 \
-  --hiveconf hive.input.format=org.apache.hadoop.hive.ql.io.HiveInputFormat \
-  --hiveconf hive.stats.autogather=false
+docker exec -it spark /bin/bash
 
-0: jdbc:hive2://hiveserver:10000> set hoodie.stock_ticks_cow.consume.mode=INCREMENTAL;
-No rows affected (0.009 seconds)
-0: jdbc:hive2://hiveserver:10000> set hoodie.stock_ticks_cow.consume.max.commits=3;
-No rows affected (0.009 seconds)
-0: jdbc:hive2://hiveserver:10000> set hoodie.stock_ticks_cow.consume.start.timestamp=20180924064621;
+spark-sql --packages org.apache.hudi:hudi-utilities-slim-bundle_2.12:0.15.0,org.apache.hudi:hudi-spark3.4-bundle_2.12:0.15.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 \
+--conf 'spark.serializer=org.apache.spark.serializer.KryoSerializer' \
+--conf 'spark.sql.catalog.spark_catalog=org.apache.spark.sql.hudi.catalog.HoodieCatalog' \
+--conf 'spark.sql.extensions=org.apache.spark.sql.hudi.HoodieSparkSessionExtension' \
+--conf 'spark.kryo.registrator=org.apache.spark.HoodieSparkKryoRegistrar'
+
+
+spark-sql (default)> set hoodie.stock_ticks_cow.consume.mode=INCREMENTAL;
+hoodie.stock_ticks_cow.consume.mode	INCREMENTAL
+Time taken: 0.042 seconds, Fetched 1 row(s)
+
+spark-sql (default)> set hoodie.stock_ticks_cow.consume.max.commits=3;
+hoodie.stock_ticks_cow.consume.max.commits	3
+Time taken: 0.028 seconds, Fetched 1 row(s)
+
+spark-sql (default)> set hoodie.stock_ticks_cow.consume.start.timestamp=20240904122742622;
+hoodie.stock_ticks_cow.consume.start.timestamp	20240904122742622
+Time taken: 0.029 seconds, Fetched 1 row(s)
 ```
 
-With the above setting, file-ids that do not have any updates from the commit 20180924065039 is filtered out without scanning.
+With the above setting, file-ids that do not have any updates from the commit 20240904130113388 is filtered out without scanning.
 Here is the incremental query :
 
 ```java
-0: jdbc:hive2://hiveserver:10000>
-0: jdbc:hive2://hiveserver:10000> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_cow where  symbol = 'GOOG' and `_hoodie_commit_time` > '20180924064621';
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| _hoodie_commit_time  | symbol  |          ts          | volume  |    open    |   close   |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| 20180924065039       | GOOG    | 2018-08-31 10:59:00  | 9021    | 1227.1993  | 1227.215  |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-1 row selected (0.83 seconds)
-0: jdbc:hive2://hiveserver:10000>
+spark-sql (default)> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_cow where  symbol = 'GOOG' and `_hoodie_commit_time` > '20240904122742622';
+20240904130113388	GOOG	2018-08-31 10:59:00	9021	1227.1993	1227.215
+Time taken: 0.199 seconds, Fetched 1 row(s)
 ```
 
-### Step 7 (b): Incremental Query with Spark SQL:
+### Step 7 (b): Incremental Query with Spark Shell:
 
 ```java
 docker exec -it adhoc-1 /bin/bash
