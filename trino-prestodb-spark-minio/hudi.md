@@ -14,6 +14,10 @@ The steps have been tested on a Mac laptop
     * [If using Mac ARM], Use Rosetta for x86_64/amd64 emulation on Apple Silicon: CHECKED
   * ngrok
     * Sign up for an account with ngrok, it will be used so that you can access your kafka cluster on the internet.  You will need an ngrok authtoken in the following steps.
+  * Internet connectivity
+    * Maven repositories like https://mvnrepository.com/
+    * Docker Hub
+    * Others
     
 Also, this has not been tested on some environments like Docker on Windows.
 
@@ -153,14 +157,14 @@ spark-submit \
 exit
 ```
 
-You can use Min.IO web-browser to look at the tables
-`http://localhost:9001`.
+You can use Min.IO browser to look at the tables
+`http://localhost:9001/browser/warehouse/stock_ticks_cow%2F` with username/password of admin/password.
 
 You can explore the new partition folder created in the table along with a "commit" / "deltacommit"
 file under .hoodie which signals a successful commit.
 
 There will be a similar setup when you browse the MOR table
-`http://localhost:9001`
+`http://localhost:9001/browser/warehouse/stock_ticks_mor%2F` with username/password of admin/password.
 
 
 ### Step 3: Sync with Hive
@@ -181,7 +185,7 @@ docker exec -it openjdk8 /bin/bash
 --sync-mode hms \
 --partition-value-extractor org.apache.hudi.hive.SlashEncodedDayPartitionValueExtractor
 .....
-2024-01-25 19:51:28,953 INFO  [main] hive.HiveSyncTool (HiveSyncTool.java:syncHoodieTable(129)) - Sync complete for stock_ticks_cow
+2024-09-04 12:33:27,101 INFO  [main] hive.HiveSyncTool (HiveSyncTool.java:syncHoodieTable(297)) - Sync complete for stock_ticks_cow
 .....
 
 # Now run hive-sync for the second data-set in S3 using Merge-On-Read (MOR table type)
@@ -193,11 +197,9 @@ docker exec -it openjdk8 /bin/bash
 --table stock_ticks_mor \
 --sync-mode hms \
 --partition-value-extractor org.apache.hudi.hive.SlashEncodedDayPartitionValueExtractor
-...
-2024-01-25 19:51:51,066 INFO  [main] hive.HiveSyncTool (HiveSyncTool.java:syncHoodieTable(129)) - Sync complete for stock_ticks_mor_ro
-...
-2024-01-25 19:51:51,569 INFO  [main] hive.HiveSyncTool (HiveSyncTool.java:syncHoodieTable(129)) - Sync complete for stock_ticks_mor_rt
-....
+.....
+2024-09-04 12:34:16,413 INFO  [main] hive.HiveSyncTool (HiveSyncTool.java:syncHoodieTable(297)) - Sync complete for stock_ticks_mor
+.....
 
 exit
 ```
@@ -208,9 +210,9 @@ After executing the above command, you will notice
 supports Snapshot and Incremental queries (providing near-real time data) while the later supports ReadOptimized queries.
 
 
-### Step 4 (a): Run Hive Queries with Spark-SQL
+### Step 4 (a): Run Queries with Spark-SQL
 
-Run a hive query to find the latest timestamp ingested for stock symbol 'GOOG'. You will notice that both snapshot 
+Run a \ query to find the latest timestamp ingested for stock symbol 'GOOG'. You will notice that both snapshot 
 (for both COW and MOR _rt table) and read-optimized queries (for MOR _ro table) give the same value "10:29 a.m" as Hudi create a
 parquet file for the first batch of data.
 
@@ -224,49 +226,33 @@ spark-sql --packages org.apache.hudi:hudi-utilities-slim-bundle_2.12:0.15.0,org.
 --conf 'spark.kryo.registrator=org.apache.spark.HoodieSparkKryoRegistrar'
 
 # List Tables
-0: jdbc:hive2://hiveserver:10000> show tables;
-+---------------------+--+
-|      tab_name       |
-+---------------------+--+
-| stock_ticks_cow     |
-| stock_ticks_mor_ro  |
-| stock_ticks_mor_rt  |
-+---------------------+--+
-3 rows selected (1.199 seconds)
-0: jdbc:hive2://hiveserver:10000>
+spark-sql (default)> show tables;
+stock_ticks_cow
+stock_ticks_mor
+stock_ticks_mor_ro
+stock_ticks_mor_rt
+Time taken: 1.006 seconds, Fetched 4 row(s)
 
 
 # Look at partitions that were added
-0: jdbc:hive2://hiveserver:10000> show partitions stock_ticks_mor_rt;
-+----------------+--+
-|   partition    |
-+----------------+--+
-| dt=2018-08-31  |
-+----------------+--+
-1 row selected (0.24 seconds)
+spark-sql (default)> show partitions stock_ticks_mor_rt;
+2018/08/31
+Time taken: 1.191 seconds, Fetched 1 row(s)
 
 
 # COPY-ON-WRITE Queries:
 =========================
 
-
-0: jdbc:hive2://hiveserver:10000> select symbol, max(ts) from stock_ticks_cow group by symbol HAVING symbol = 'GOOG';
-+---------+----------------------+--+
-| symbol  |         _c1          |
-+---------+----------------------+--+
-| GOOG    | 2018-08-31 10:29:00  |
-+---------+----------------------+--+
+spark-sql (default)> select symbol, max(ts) from stock_ticks_cow group by symbol HAVING symbol = 'GOOG';
+GOOG	2018-08-31 10:29:00
+Time taken: 1.701 seconds, Fetched 1 row(s)
 
 Now, run a projection query:
 
-0: jdbc:hive2://hiveserver:10000> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_cow where  symbol = 'GOOG';
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| _hoodie_commit_time  | symbol  |          ts          | volume  |    open    |   close   |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| 20180924221953       | GOOG    | 2018-08-31 09:59:00  | 6330    | 1230.5     | 1230.02   |
-| 20180924221953       | GOOG    | 2018-08-31 10:29:00  | 3391    | 1230.1899  | 1230.085  |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-
+spark-sql (default)> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_cow where  symbol = 'GOOG';
+20240904122742622	GOOG	2018-08-31 09:59:00	6330	1230.5	1230.02
+20240904122742622	GOOG	2018-08-31 10:29:00	3391	1230.1899	1230.085
+Time taken: 0.149 seconds, Fetched 2 row(s)
 
 # Merge-On-Read Queries:
 ==========================
@@ -275,99 +261,81 @@ Lets run similar queries against M-O-R table. Lets look at both
 ReadOptimized and Snapshot(realtime data) queries supported by M-O-R table
 
 # Run ReadOptimized Query. Notice that the latest timestamp is 10:29
-0: jdbc:hive2://hiveserver:10000> select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG';
-WARNING: Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
-+---------+----------------------+--+
-| symbol  |         _c1          |
-+---------+----------------------+--+
-| GOOG    | 2018-08-31 10:29:00  |
-+---------+----------------------+--+
-1 row selected (6.326 seconds)
+spark-sql (default)> select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG';
+GOOG	2018-08-31 10:29:00
+Time taken: 0.484 seconds, Fetched 1 row(s)
 
 
 # Run Snapshot Query. Notice that the latest timestamp is again 10:29
 
-0: jdbc:hive2://hiveserver:10000> select symbol, max(ts) from stock_ticks_mor_rt group by symbol HAVING symbol = 'GOOG';
-WARNING: Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
-+---------+----------------------+--+
-| symbol  |         _c1          |
-+---------+----------------------+--+
-| GOOG    | 2018-08-31 10:29:00  |
-+---------+----------------------+--+
-1 row selected (1.606 seconds)
+spark-sql (default)> select symbol, max(ts) from stock_ticks_mor_rt group by symbol HAVING symbol = 'GOOG';
+GOOG	2018-08-31 10:29:00
+Time taken: 0.558 seconds, Fetched 1 row(s)
 
 
 # Run Read Optimized and Snapshot project queries
 
-0: jdbc:hive2://hiveserver:10000> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG';
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| _hoodie_commit_time  | symbol  |          ts          | volume  |    open    |   close   |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| 20180924222155       | GOOG    | 2018-08-31 09:59:00  | 6330    | 1230.5     | 1230.02   |
-| 20180924222155       | GOOG    | 2018-08-31 10:29:00  | 3391    | 1230.1899  | 1230.085  |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
+spark-sql (default)> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG';
+20240904123001395	GOOG	2018-08-31 09:59:00	6330	1230.5	1230.02
+20240904123001395	GOOG	2018-08-31 10:29:00	3391	1230.1899	1230.085
+Time taken: 0.121 seconds, Fetched 2 row(s)
 
-0: jdbc:hive2://hiveserver:10000> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_rt where  symbol = 'GOOG';
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| _hoodie_commit_time  | symbol  |          ts          | volume  |    open    |   close   |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| 20180924222155       | GOOG    | 2018-08-31 09:59:00  | 6330    | 1230.5     | 1230.02   |
-| 20180924222155       | GOOG    | 2018-08-31 10:29:00  | 3391    | 1230.1899  | 1230.085  |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
+spark-sql (default)> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_rt where  symbol = 'GOOG';
+20240904123001395	GOOG	2018-08-31 09:59:00	6330	1230.5	1230.02
+20240904123001395	GOOG	2018-08-31 10:29:00	3391	1230.1899	1230.085
+Time taken: 0.132 seconds, Fetched 2 row(s)
+
+spark-sql (default)> exit;
 
 exit
 ```
 
 ### Step 4 (b): Run Spark-Shell Queries
-Hudi support Spark as query processor just like Hive. Here are the same hive queries
-running in spark-shell
+Hudi support Spark as query processor just like Hive. Here are the same hive queries running in spark-shell
 
 ```java
-docker exec -it adhoc-1 /bin/bash
-$SPARK_INSTALL/bin/spark-shell \
-  --jars $HUDI_SPARK_BUNDLE \
-  --master local[2] \
-  --driver-class-path $HADOOP_CONF_DIR \
-  --conf spark.sql.hive.convertMetastoreParquet=false \
-  --deploy-mode client \
-  --driver-memory 1G \
-  --executor-memory 3G \
-  --num-executors 1
+docker exec -it spark /bin/bash
+
+spark-shell --packages org.apache.hudi:hudi-utilities-slim-bundle_2.12:0.15.0,org.apache.hudi:hudi-spark3.4-bundle_2.12:0.15.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 \
+--conf 'spark.serializer=org.apache.spark.serializer.KryoSerializer' \
+--conf 'spark.sql.catalog.spark_catalog=org.apache.spark.sql.hudi.catalog.HoodieCatalog' \
+--conf 'spark.sql.extensions=org.apache.spark.sql.hudi.HoodieSparkSessionExtension' \
+--conf 'spark.kryo.registrator=org.apache.spark.HoodieSparkKryoRegistrar'
+
 ...
 
 Welcome to
       ____              __
      / __/__  ___ _____/ /__
     _\ \/ _ \/ _ `/ __/  '_/
-   /___/ .__/\_,_/_/ /_/\_\   version 2.4.4
+   /___/ .__/\_,_/_/ /_/\_\   version 3.4.3
       /_/
 
-Using Scala version 2.11.12 (OpenJDK 64-Bit Server VM, Java 1.8.0_212)
+Using Scala version 2.12.17 (OpenJDK 64-Bit Server VM, Java 11.0.24)
 Type in expressions to have them evaluated.
 Type :help for more information.
 
 scala> spark.sql("show tables").show(100, false)
-+--------+------------------+-----------+
-|database|tableName         |isTemporary|
-+--------+------------------+-----------+
-|default |stock_ticks_cow   |false      |
-|default |stock_ticks_mor_ro|false      |
-|default |stock_ticks_mor_rt|false      |
-+--------+------------------+-----------+
++---------+------------------+-----------+
+|namespace|tableName         |isTemporary|
++---------+------------------+-----------+
+|default  |stock_ticks_cow   |false      |
+|default  |stock_ticks_mor   |false      |
+|default  |stock_ticks_mor_ro|false      |
+|default  |stock_ticks_mor_rt|false      |
++---------+------------------+-----------+
 
 # Copy-On-Write Table
 
 ## Run max timestamp query against COW table
 
 scala> spark.sql("select symbol, max(ts) from stock_ticks_cow group by symbol HAVING symbol = 'GOOG'").show(100, false)
-[Stage 0:>                                                          (0 + 1) / 1]SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
-SLF4J: Defaulting to no-operation (NOP) logger implementation
-SLF4J: See http://www.slf4j.org/codes#StaticLoggerBinder for further details.
 +------+-------------------+
 |symbol|max(ts)            |
 +------+-------------------+
 |GOOG  |2018-08-31 10:29:00|
 +------+-------------------+
+
 
 ## Projection Query
 
@@ -375,8 +343,8 @@ scala> spark.sql("select `_hoodie_commit_time`, symbol, ts, volume, open, close 
 +-------------------+------+-------------------+------+---------+--------+
 |_hoodie_commit_time|symbol|ts                 |volume|open     |close   |
 +-------------------+------+-------------------+------+---------+--------+
-|20180924221953     |GOOG  |2018-08-31 09:59:00|6330  |1230.5   |1230.02 |
-|20180924221953     |GOOG  |2018-08-31 10:29:00|3391  |1230.1899|1230.085|
+|20240904122742622  |GOOG  |2018-08-31 09:59:00|6330  |1230.5   |1230.02 |
+|20240904122742622  |GOOG  |2018-08-31 10:29:00|3391  |1230.1899|1230.085|
 +-------------------+------+-------------------+------+---------+--------+
 
 # Merge-On-Read Queries:
@@ -403,183 +371,106 @@ scala> spark.sql("select symbol, max(ts) from stock_ticks_mor_rt group by symbol
 |GOOG  |2018-08-31 10:29:00|
 +------+-------------------+
 
+
 # Run Read Optimized and Snapshot project queries
 
 scala> spark.sql("select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG'").show(100, false)
 +-------------------+------+-------------------+------+---------+--------+
 |_hoodie_commit_time|symbol|ts                 |volume|open     |close   |
 +-------------------+------+-------------------+------+---------+--------+
-|20180924222155     |GOOG  |2018-08-31 09:59:00|6330  |1230.5   |1230.02 |
-|20180924222155     |GOOG  |2018-08-31 10:29:00|3391  |1230.1899|1230.085|
+|20240904123001395  |GOOG  |2018-08-31 09:59:00|6330  |1230.5   |1230.02 |
+|20240904123001395  |GOOG  |2018-08-31 10:29:00|3391  |1230.1899|1230.085|
 +-------------------+------+-------------------+------+---------+--------+
+
 
 scala> spark.sql("select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_rt where  symbol = 'GOOG'").show(100, false)
 +-------------------+------+-------------------+------+---------+--------+
 |_hoodie_commit_time|symbol|ts                 |volume|open     |close   |
 +-------------------+------+-------------------+------+---------+--------+
-|20180924222155     |GOOG  |2018-08-31 09:59:00|6330  |1230.5   |1230.02 |
-|20180924222155     |GOOG  |2018-08-31 10:29:00|3391  |1230.1899|1230.085|
+|20240904123001395  |GOOG  |2018-08-31 09:59:00|6330  |1230.5   |1230.02 |
+|20240904123001395  |GOOG  |2018-08-31 10:29:00|3391  |1230.1899|1230.085|
 +-------------------+------+-------------------+------+---------+--------+
+
+scala> :quit
+
+exit
 ```
 
-### Step 4 (c): Run Presto Queries
+### Step 4 (c): Run Trino Queries
 
-Here are the Presto queries for similar Hive and Spark queries. 
-
-:::note 
-<ul>
-  <li> Currently, Presto does not support snapshot or incremental queries on Hudi tables. </li>
-  <li> This section of the demo is not supported for Mac AArch64 users at this time. </li>
-</ul>
-:::
+Here are the similar queries with Trino.
 
 ```java
-docker exec -it presto-worker-1 presto --server presto-coordinator-1:8090
-presto> show catalogs;
-  Catalog
------------
+docker exec -it trino /bin/bash
+
+trino
+
+trino> show catalogs;
+ Catalog
+---------
+ delta
  hive
- jmx
- localfile
+ hudi
+ iceberg
  system
-(4 rows)
+(5 rows)
 
-Query 20190817_134851_00000_j8rcz, FINISHED, 1 node
+Query 20240904_124925_00000_2hhut, FINISHED, 1 node
 Splits: 19 total, 19 done (100.00%)
-0:04 [0 rows, 0B] [0 rows/s, 0B/s]
+0.65 [0 rows, 0B] [0 rows/s, 0B/s]
 
-presto> use hive.default;
+trino:default> show schemas in hudi;
+       Schema
+--------------------
+ default
+ information_schema
+(2 rows)
+
+Query 20240904_125410_00005_dyubr, FINISHED, 1 node
+Splits: 19 total, 19 done (100.00%)
+0.17 [2 rows, 35B] [11 rows/s, 203B/s]
+
+trino> use hudi.default;
 USE
-presto:default> show tables;
+
+trino:default> show tables;
        Table
 --------------------
  stock_ticks_cow
+ stock_ticks_mor
  stock_ticks_mor_ro
  stock_ticks_mor_rt
-(3 rows)
+(4 rows)
 
-Query 20190822_181000_00001_segyw, FINISHED, 2 nodes
+Query 20240904_125328_00004_dyubr, FINISHED, 1 node
 Splits: 19 total, 19 done (100.00%)
-0:05 [3 rows, 99B] [0 rows/s, 18B/s]
+0.21 [4 rows, 134B] [19 rows/s, 654B/s]
 
 
-# COPY-ON-WRITE Queries:
-=========================
-
-
-presto:default> select symbol, max(ts) from stock_ticks_cow group by symbol HAVING symbol = 'GOOG';
- symbol |        _col1
---------+---------------------
- GOOG   | 2018-08-31 10:29:00
-(1 row)
-
-Query 20190822_181011_00002_segyw, FINISHED, 1 node
-Splits: 49 total, 49 done (100.00%)
-0:12 [197 rows, 613B] [16 rows/s, 50B/s]
-
-presto:default> select "_hoodie_commit_time", symbol, ts, volume, open, close from stock_ticks_cow where symbol = 'GOOG';
- _hoodie_commit_time | symbol |         ts          | volume |   open    |  close
----------------------+--------+---------------------+--------+-----------+----------
- 20190822180221      | GOOG   | 2018-08-31 09:59:00 |   6330 |    1230.5 |  1230.02
- 20190822180221      | GOOG   | 2018-08-31 10:29:00 |   3391 | 1230.1899 | 1230.085
-(2 rows)
-
-Query 20190822_181141_00003_segyw, FINISHED, 1 node
-Splits: 17 total, 17 done (100.00%)
-0:02 [197 rows, 613B] [109 rows/s, 341B/s]
-
-
-# Merge-On-Read Queries:
-==========================
-
-Lets run similar queries against M-O-R table. 
-
-# Run ReadOptimized Query. Notice that the latest timestamp is 10:29
-    presto:default> select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG';
- symbol |        _col1
---------+---------------------
- GOOG   | 2018-08-31 10:29:00
-(1 row)
-
-Query 20190822_181158_00004_segyw, FINISHED, 1 node
-Splits: 49 total, 49 done (100.00%)
-0:02 [197 rows, 613B] [110 rows/s, 343B/s]
-
-
-presto:default>  select "_hoodie_commit_time", symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG';
- _hoodie_commit_time | symbol |         ts          | volume |   open    |  close
----------------------+--------+---------------------+--------+-----------+----------
- 20190822180250      | GOOG   | 2018-08-31 09:59:00 |   6330 |    1230.5 |  1230.02
- 20190822180250      | GOOG   | 2018-08-31 10:29:00 |   3391 | 1230.1899 | 1230.085
-(2 rows)
-
-Query 20190822_181256_00006_segyw, FINISHED, 1 node
-Splits: 17 total, 17 done (100.00%)
-0:02 [197 rows, 613B] [92 rows/s, 286B/s]
-
-presto:default> exit
-```
-
-### Step 4 (d): Run Trino Queries
-
-Here are the similar queries with Trino.
-:::note
-<ul>
-  <li> Currently, Trino does not support snapshot or incremental queries on Hudi tables. </li>
-  <li> This section of the demo is not supported for Mac AArch64 users at this time. </li>
-</ul>
-:::
-
-```java
-docker exec -it adhoc-2 trino --server trino-coordinator-1:8091
-trino> show catalogs;
- Catalog 
----------
- hive    
- system  
-(2 rows)
-
-Query 20220112_055038_00000_sac73, FINISHED, 1 node
-Splits: 19 total, 19 done (100.00%)
-3.74 [0 rows, 0B] [0 rows/s, 0B/s]
-
-trino> use hive.default;
-USE
-trino:default> show tables;
-       Table        
---------------------
- stock_ticks_cow    
- stock_ticks_mor_ro 
- stock_ticks_mor_rt 
-(3 rows)
-
-Query 20220112_055050_00003_sac73, FINISHED, 2 nodes
-Splits: 19 total, 19 done (100.00%)
-1.84 [3 rows, 102B] [1 rows/s, 55B/s]
 
 # COPY-ON-WRITE Queries:
 =========================
     
 trino:default> select symbol, max(ts) from stock_ticks_cow group by symbol HAVING symbol = 'GOOG';
- symbol |        _col1        
+ symbol |        _col1
 --------+---------------------
- GOOG   | 2018-08-31 10:29:00 
+ GOOG   | 2018-08-31 10:29:00
 (1 row)
 
-Query 20220112_055101_00005_sac73, FINISHED, 1 node
-Splits: 49 total, 49 done (100.00%)
-4.08 [197 rows, 442KB] [48 rows/s, 108KB/s]
+Query 20240904_125446_00006_dyubr, FINISHED, 1 node
+Splits: 33 total, 33 done (100.00%)
+2.01 [197 rows, 474KB] [98 rows/s, 236KB/s]
 
 trino:default> select "_hoodie_commit_time", symbol, ts, volume, open, close from stock_ticks_cow where symbol = 'GOOG';
- _hoodie_commit_time | symbol |         ts          | volume |   open    |  close   
+ _hoodie_commit_time | symbol |         ts          | volume |   open    |  close
 ---------------------+--------+---------------------+--------+-----------+----------
- 20220112054822108   | GOOG   | 2018-08-31 09:59:00 |   6330 |    1230.5 |  1230.02 
- 20220112054822108   | GOOG   | 2018-08-31 10:29:00 |   3391 | 1230.1899 | 1230.085 
+ 20240904122742622   | GOOG   | 2018-08-31 09:59:00 |   6330 |    1230.5 |  1230.02
+ 20240904122742622   | GOOG   | 2018-08-31 10:29:00 |   3391 | 1230.1899 | 1230.085
 (2 rows)
 
-Query 20220112_055113_00006_sac73, FINISHED, 1 node
-Splits: 17 total, 17 done (100.00%)
-0.40 [197 rows, 450KB] [487 rows/s, 1.09MB/s]
+Query 20240904_125506_00007_dyubr, FINISHED, 1 node
+Splits: 1 total, 1 done (100.00%)
+1.08 [197 rows, 481KB] [182 rows/s, 447KB/s]
 
 # Merge-On-Read Queries:
 ==========================
@@ -589,27 +480,29 @@ Lets run similar queries against MOR table.
 # Run ReadOptimized Query. Notice that the latest timestamp is 10:29
     
 trino:default> select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG';
- symbol |        _col1        
+ symbol |        _col1
 --------+---------------------
- GOOG   | 2018-08-31 10:29:00 
+ GOOG   | 2018-08-31 10:29:00
 (1 row)
 
-Query 20220112_055125_00007_sac73, FINISHED, 1 node
-Splits: 49 total, 49 done (100.00%)
-0.50 [197 rows, 442KB] [395 rows/s, 888KB/s]
+Query 20240904_125531_00008_dyubr, FINISHED, 1 node
+Splits: 33 total, 33 done (100.00%)
+0.95 [197 rows, 474KB] [208 rows/s, 501KB/s]
 
 trino:default> select "_hoodie_commit_time", symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG';
- _hoodie_commit_time | symbol |         ts          | volume |   open    |  close   
+ _hoodie_commit_time | symbol |         ts          | volume |   open    |  close
 ---------------------+--------+---------------------+--------+-----------+----------
- 20220112054844841   | GOOG   | 2018-08-31 09:59:00 |   6330 |    1230.5 |  1230.02 
- 20220112054844841   | GOOG   | 2018-08-31 10:29:00 |   3391 | 1230.1899 | 1230.085 
+ 20240904123001395   | GOOG   | 2018-08-31 09:59:00 |   6330 |    1230.5 |  1230.02
+ 20240904123001395   | GOOG   | 2018-08-31 10:29:00 |   3391 | 1230.1899 | 1230.085
 (2 rows)
 
-Query 20220112_055136_00008_sac73, FINISHED, 1 node
-Splits: 17 total, 17 done (100.00%)
-0.49 [197 rows, 450KB] [404 rows/s, 924KB/s]
+Query 20240904_125548_00009_dyubr, FINISHED, 1 node
+Splits: 1 total, 1 done (100.00%)
+0.94 [197 rows, 481KB] [209 rows/s, 512KB/s]
 
 trino:default> exit
+
+exit
 ```
 
 ### Step 5: Upload second batch to Kafka and run Hudi Streamer to ingest
