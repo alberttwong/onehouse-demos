@@ -1,5 +1,4 @@
 version: 2
-authtoken: 3BkqsXezvxPB1YYvWpEHs_82q1g9Pb5k1F3WyJxqGkj
 log: stdout
 tunnels:
   kafka:
