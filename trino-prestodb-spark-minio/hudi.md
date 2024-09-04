@@ -1098,115 +1098,20 @@ presto:default>
 
 This brings the demo to an end.
 
-## Testing Hudi in Local Docker environment
+## Additional Demos
 
-You can bring up a Hadoop Docker environment containing Hadoop, Hive and Spark services with support for Hudi.
-```java
-$ mvn pre-integration-test -DskipTests
-```
-The above command builds Docker images for all the services with
-current Hudi source installed at /var/hoodie/ws and also brings up the services using a compose file. We
-currently use Hadoop (v2.8.4), Hive (v2.3.3) and Spark (v2.4.4) in Docker images.
+### Apache xTable
 
-To bring down the containers
-```java
-$ cd hudi-integ-test
-$ mvn docker-compose:down
-```
+You can easily add Apache xTable to this demo.   Just follow the steps in the Apache xTable Quickstart using this docker compose.
 
-If you want to bring up the Docker containers, use
-```java
-$ cd hudi-integ-test
-$ mvn docker-compose:up -DdetachedMode=true
-```
+### Conduktor
 
-Hudi is a library that is operated in a broader data analytics/ingestion environment
-involving Hadoop, Hive and Spark. Interoperability with all these systems is a key objective for us. We are
-actively adding integration-tests under __hudi-integ-test/src/test/java__ that makes use of this
-docker environment (See __hudi-integ-test/src/test/java/org/apache/hudi/integ/ITTestHoodieSanity.java__ )
+Conduktor is a web based way for you see your kafka environment.   Just use the ngrok kafka URL to connect.   
 
+### Debezium
 
-### Building Local Docker Containers:
+You can extend this demo to a Database CDC demo by adding a database like postgresSQL and adding the Debezium Kafka Connect container images into this docker compose. 
 
-The Docker images required for demo and running integration test are already in docker-hub. The Docker images
-and compose scripts are carefully implemented so that they serve dual-purpose
+### Onehouse.ai
 
-1. The Docker images have inbuilt Hudi jar files with environment variable pointing to those jars (HUDI_HADOOP_BUNDLE, ...)
-2. For running integration-tests, we need the jars generated locally to be used for running services within docker. The
-   docker-compose scripts (see `docker/compose/docker-compose_hadoop284_hive233_spark244.yml`) ensures local jars override
-   inbuilt jars by mounting local Hudi workspace over the Docker location
-3. As these Docker containers have mounted local Hudi workspace, any changes that happen in the workspace would automatically 
-   reflect in the containers. This is a convenient way for developing and verifying Hudi for
-   developers who do not own a distributed environment. Note that this is how integration tests are run.
-
-This helps avoid maintaining separate Docker images and avoids the costly step of building Hudi Docker images locally.
-But if users want to test Hudi from locations with lower network bandwidth, they can still build local images
-run the script
-`docker/build_local_docker_images.sh` to build local Docker images before running `docker/setup_demo.sh`
-
-Here are the commands:
-
-```java
-cd docker
-./build_local_docker_images.sh
-.....
-
-[INFO] Reactor Summary:
-[INFO]
-[INFO] Hudi ............................................... SUCCESS [  2.507 s]
-[INFO] hudi-common ........................................ SUCCESS [ 15.181 s]
-[INFO] hudi-aws ........................................... SUCCESS [  2.621 s]
-[INFO] hudi-timeline-service .............................. SUCCESS [  1.811 s]
-[INFO] hudi-client ........................................ SUCCESS [  0.065 s]
-[INFO] hudi-client-common ................................. SUCCESS [  8.308 s]
-[INFO] hudi-hadoop-mr ..................................... SUCCESS [  3.733 s]
-[INFO] hudi-spark-client .................................. SUCCESS [ 18.567 s]
-[INFO] hudi-sync-common ................................... SUCCESS [  0.794 s]
-[INFO] hudi-hive-sync ..................................... SUCCESS [  3.691 s]
-[INFO] hudi-spark-datasource .............................. SUCCESS [  0.121 s]
-[INFO] hudi-spark-common_2.11 ............................. SUCCESS [ 12.979 s]
-[INFO] hudi-spark2_2.11 ................................... SUCCESS [ 12.516 s]
-[INFO] hudi-spark_2.11 .................................... SUCCESS [ 35.649 s]
-[INFO] hudi-utilities_2.11 ................................ SUCCESS [  5.881 s]
-[INFO] hudi-utilities-bundle_2.11 ......................... SUCCESS [ 12.661 s]
-[INFO] hudi-cli ........................................... SUCCESS [ 19.858 s]
-[INFO] hudi-java-client ................................... SUCCESS [  3.221 s]
-[INFO] hudi-flink-client .................................. SUCCESS [  5.731 s]
-[INFO] hudi-spark3_2.12 ................................... SUCCESS [  8.627 s]
-[INFO] hudi-dla-sync ...................................... SUCCESS [  1.459 s]
-[INFO] hudi-sync .......................................... SUCCESS [  0.053 s]
-[INFO] hudi-hadoop-mr-bundle .............................. SUCCESS [  5.652 s]
-[INFO] hudi-hive-sync-bundle .............................. SUCCESS [  1.623 s]
-[INFO] hudi-spark-bundle_2.11 ............................. SUCCESS [ 10.930 s]
-[INFO] hudi-presto-bundle ................................. SUCCESS [  3.652 s]
-[INFO] hudi-timeline-server-bundle ........................ SUCCESS [  4.804 s]
-[INFO] hudi-trino-bundle .................................. SUCCESS [  5.991 s]
-[INFO] hudi-hadoop-docker ................................. SUCCESS [  2.061 s]
-[INFO] hudi-hadoop-base-docker ............................ SUCCESS [ 53.372 s]
-[INFO] hudi-hadoop-base-java11-docker ..................... SUCCESS [ 48.545 s]
-[INFO] hudi-hadoop-namenode-docker ........................ SUCCESS [  6.098 s]
-[INFO] hudi-hadoop-datanode-docker ........................ SUCCESS [  4.825 s]
-[INFO] hudi-hadoop-history-docker ......................... SUCCESS [  3.829 s]
-[INFO] hudi-hadoop-hive-docker ............................ SUCCESS [ 52.660 s]
-[INFO] hudi-hadoop-sparkbase-docker ....................... SUCCESS [01:02 min]
-[INFO] hudi-hadoop-sparkmaster-docker ..................... SUCCESS [ 12.661 s]
-[INFO] hudi-hadoop-sparkworker-docker ..................... SUCCESS [  4.350 s]
-[INFO] hudi-hadoop-sparkadhoc-docker ...................... SUCCESS [ 59.083 s]
-[INFO] hudi-hadoop-presto-docker .......................... SUCCESS [01:31 min]
-[INFO] hudi-hadoop-trinobase-docker ....................... SUCCESS [02:40 min]
-[INFO] hudi-hadoop-trinocoordinator-docker ................ SUCCESS [ 14.003 s]
-[INFO] hudi-hadoop-trinoworker-docker ..................... SUCCESS [ 12.100 s]
-[INFO] hudi-integ-test .................................... SUCCESS [ 13.581 s]
-[INFO] hudi-integ-test-bundle ............................. SUCCESS [ 27.212 s]
-[INFO] hudi-examples ...................................... SUCCESS [  8.090 s]
-[INFO] hudi-flink_2.11 .................................... SUCCESS [  4.217 s]
-[INFO] hudi-kafka-connect ................................. SUCCESS [  2.966 s]
-[INFO] hudi-flink-bundle_2.11 ............................. SUCCESS [ 11.155 s]
-[INFO] hudi-kafka-connect-bundle .......................... SUCCESS [ 12.369 s]
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  14:35 min
-[INFO] Finished at: 2022-01-12T18:41:27-08:00
-[INFO] ------------------------------------------------------------------------
-```
+You can hook up this environment to Onehouse.ai by using this demo as a kafka source and using the ngrok kafka URL.
