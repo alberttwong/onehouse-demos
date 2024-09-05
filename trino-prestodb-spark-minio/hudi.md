@@ -869,10 +869,38 @@ Again, You can use Hudi CLI to manually schedule and run compaction
 ```java
 docker exec -it openjdk8 /bin/bash
 
-root@adhoc-1:/opt# /opt/hudi/hudi-cli/hudi-cli.sh
-...
-Table command getting loaded
-HoodieSplashScreen loaded
+root@openjdk8:/spark-3.4.3-bin-hadoop3/bin# /opt/hudi/packaging/hudi-cli-bundle/hudi-cli-with-bundle.sh
+DIR is /opt/hudi/packaging/hudi-cli-bundle
+Inferring CLI_BUNDLE_JAR path assuming this script is under Hudi repo
+Inferring SPARK_BUNDLE_JAR path assuming this script is under Hudi repo
+CLI_BUNDLE_JAR: /opt/hudi/packaging/hudi-cli-bundle/target/hudi-cli-bundle_2.12-0.15.0.jar
+SPARK_BUNDLE_JAR: /opt/hudi/packaging/hudi-cli-bundle/../hudi-spark-bundle/target/hudi-spark-bundle_2.12-0.15.0.jar
+Downloading necessary auxiliary jars for Hudi CLI
+--2024-09-04 18:07:34--  https://repo1.maven.org/maven2/org/glassfish/jakarta.el/3.0.3/jakarta.el-3.0.3.jar
+Resolving repo1.maven.org (repo1.maven.org)... 199.232.196.209, 199.232.192.209, 2a04:4e42:4c::209, ...
+Connecting to repo1.maven.org (repo1.maven.org)|199.232.196.209|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 237826 (232K) [application/java-archive]
+Saving to: ‘auxlib/jakarta.el-3.0.3.jar’
+
+jakarta.el-3.0.3.jar                         100%[===========================================================================================>] 232.25K  --.-KB/s    in 0.03s
+
+2024-09-04 18:07:35 (7.35 MB/s) - ‘auxlib/jakarta.el-3.0.3.jar’ saved [237826/237826]
+
+--2024-09-04 18:07:35--  https://repo1.maven.org/maven2/jakarta/el/jakarta.el-api/3.0.3/jakarta.el-api-3.0.3.jar
+Resolving repo1.maven.org (repo1.maven.org)... 199.232.196.209, 199.232.192.209, 2a04:4e42:4c::209, ...
+Connecting to repo1.maven.org (repo1.maven.org)|199.232.196.209|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 79816 (78K) [application/java-archive]
+Saving to: ‘auxlib/jakarta.el-api-3.0.3.jar’
+
+jakarta.el-api-3.0.3.jar                     100%[===========================================================================================>]  77.95K  --.-KB/s    in 0.02s
+
+2024-09-04 18:07:35 (4.47 MB/s) - ‘auxlib/jakarta.el-api-3.0.3.jar’ saved [79816/79816]
+
+Client jar location not set, please set it in conf/hudi-env.sh
+Running : java -cp /opt/hudi/packaging/hudi-cli-bundle/conf:/opt/hudi/packaging/hudi-cli-bundle/auxlib/*:/spark/*:/spark/jars/*:/etc/hadoop/conf:/etc/spark/conf:/opt/hudi/packaging/hudi-cli-bundle/target/hudi-cli-bundle_2.12-0.15.0.jar:/opt/hudi/packaging/hudi-cli-bundle/../hudi-spark-bundle/target/hudi-spark-bundle_2.12-0.15.0.jar: -DSPARK_CONF_DIR=/etc/spark/conf -DHADOOP_CONF_DIR=/etc/hadoop/conf org.apache.hudi.cli.Main
+Main called
 ===================================================================
 *         ___                          ___                        *
 *        /\__\          ___           /\  \           ___         *
@@ -887,8 +915,13 @@ HoodieSplashScreen loaded
 *        \/__/          \/__/         \/__/    Apache Hudi CLI    *
 *                                                                 *
 ===================================================================
+733  [main] INFO  org.apache.hudi.cli.Main [] - Starting Main v0.15.0 using Java 1.8.0_422 on openjdk8 with PID 34 (/opt/hudi/packaging/hudi-cli-bundle/target/hudi-cli-bundle_2.12-0.15.0.jar started by root in /spark-3.4.3-bin-hadoop3/bin)
+740  [main] INFO  org.apache.hudi.cli.Main [] - No active profile set, falling back to 1 default profile: "default"
+Table command getting loaded
+Sep 04, 2024 6:07:36 PM org.jline.utils.Log logr
+WARNING: The Parser of class org.springframework.shell.jline.ExtendedDefaultParser does not support the CompletingParsedLine interface. Completion with escaped or quoted words won't work correctly.
+1486 [main] INFO  org.apache.hudi.cli.Main [] - Started Main in 0.907 seconds (JVM running for 1.517)
 
-Welcome to Apache Hudi CLI. Please type help if you are looking for help.
 hudi->connect --path /user/hive/warehouse/stock_ticks_mor
 18/09/24 06:59:34 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
 18/09/24 06:59:35 INFO table.HoodieTableMetaClient: Loading HoodieTableMetaClient from /user/hive/warehouse/stock_ticks_mor
