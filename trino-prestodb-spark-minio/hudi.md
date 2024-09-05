@@ -869,6 +869,15 @@ Again, You can use Hudi CLI to manually schedule and run compaction
 ```java
 docker exec -it openjdk8 /bin/bash
 
+export HOODIE_ENV_fs_DOT_s3a_DOT_access_DOT_key=admin
+export HOODIE_ENV_fs_DOT_s3a_DOT_secret_DOT_key=password
+export HOODIE_ENV_fs_DOT_s3a_DOT_endpoint=http://minio:9000
+export HOODIE_ENV_fs_DOT_s3a_DOT_aws_DOT_credentials_DOT_provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider
+export CLIENT_JAR=/opt/hudicli/*
+export SPARK_BUNDLE_JAR=/opt/hudicli/hudi-spark-bundle_2.12-0.15.0.jar 
+export CLI_BUNDLE_JAR=/opt/hudicli/hudi-cli-bundle_2.12-0.15.0.jar
+export HUDI_CONF_DIR=/opt/hudi/packaging/hudi-cli-bundle/conf/
+
 root@openjdk8:/spark-3.4.3-bin-hadoop3/bin# /opt/hudi/packaging/hudi-cli-bundle/hudi-cli-with-bundle.sh
 DIR is /opt/hudi/packaging/hudi-cli-bundle
 Inferring CLI_BUNDLE_JAR path assuming this script is under Hudi repo
@@ -922,18 +931,20 @@ Sep 04, 2024 6:07:36 PM org.jline.utils.Log logr
 WARNING: The Parser of class org.springframework.shell.jline.ExtendedDefaultParser does not support the CompletingParsedLine interface. Completion with escaped or quoted words won't work correctly.
 1486 [main] INFO  org.apache.hudi.cli.Main [] - Started Main in 0.907 seconds (JVM running for 1.517)
 
-hudi->connect --path /user/hive/warehouse/stock_ticks_mor
-18/09/24 06:59:34 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
-18/09/24 06:59:35 INFO table.HoodieTableMetaClient: Loading HoodieTableMetaClient from /user/hive/warehouse/stock_ticks_mor
-18/09/24 06:59:35 INFO util.FSUtils: Hadoop Configuration: fs.defaultFS: [hdfs://namenode:8020], Config:[Configuration: core-default.xml, core-site.xml, mapred-default.xml, mapred-site.xml, yarn-default.xml, yarn-site.xml, hdfs-default.xml, hdfs-site.xml], FileSystem: [DFS[DFSClient[clientName=DFSClient_NONMAPREDUCE_-1261652683_11, ugi=root (auth:SIMPLE)]]]
-18/09/24 06:59:35 INFO table.HoodieTableConfig: Loading table properties from /user/hive/warehouse/stock_ticks_mor/.hoodie/hoodie.properties
-18/09/24 06:59:36 INFO table.HoodieTableMetaClient: Finished Loading Table of type MERGE_ON_READ(version=1) from /user/hive/warehouse/stock_ticks_mor
+hudi->connect --path s3a://warehouse/stock_ticks_mor
+17945 [main] WARN  org.apache.hadoop.util.NativeCodeLoader [] - Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+18394 [main] INFO  org.apache.hudi.common.table.HoodieTableMetaClient [] - Loading HoodieTableMetaClient from s3a://warehouse/stock_ticks_mor
+18429 [main] INFO  org.apache.hudi.common.table.HoodieTableConfig [] - Loading table properties from s3a://warehouse/stock_ticks_mor/.hoodie/hoodie.properties
+18441 [main] INFO  org.apache.hudi.common.table.HoodieTableMetaClient [] - Finished Loading Table of type MERGE_ON_READ(version=1, baseFileFormat=PARQUET) from s3a://warehouse/stock_ticks_mor
 Metadata for table stock_ticks_mor loaded
-hoodie:stock_ticks_mor->compactions show all
-20/02/10 03:41:32 INFO timeline.HoodieActiveTimeline: Loaded instants [[20200210015059__clean__COMPLETED], [20200210015059__deltacommit__COMPLETED], [20200210022758__clean__COMPLETED], [20200210022758__deltacommit__COMPLETED], [==>20200210023843__compaction__REQUESTED]]
-___________________________________________________________________
-| Compaction Instant Time| State    | Total FileIds to be Compacted|
-|==================================================================|
+
+hudi:stock_ticks_mor->compactions show all
+42012 [main] INFO  org.apache.hudi.common.table.timeline.HoodieActiveTimeline [] - Loaded instants upto : Option{val=[20240905011929870__deltacommit__COMPLETED__20240905011934536]}
+╔═════════════════════════╤═══════╤═══════════════════════════════╗
+║ Compaction Instant Time │ State │ Total FileIds to be Compacted ║
+╠═════════════════════════╧═══════╧═══════════════════════════════╣
+║ (empty)                                                         ║
+╚═════════════════════════════════════════════════════════════════╝
 
 # Schedule a compaction. This will use Spark Launcher to schedule compaction
 hoodie:stock_ticks_mor->compaction schedule --hoodieConfigs hoodie.compact.inline.max.delta.commits=1
