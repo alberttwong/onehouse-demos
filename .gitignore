@@ -1,3 +1,5 @@
 
 trino-prestodb-spark-minio/presto/node.properties
 trino-prestodb-spark-minio/presto/node.properties
+/trino-prestodb-spark-minio/hudicli/auxlib
+trino-prestodb-spark-minio/hudicli/spring-shell.log

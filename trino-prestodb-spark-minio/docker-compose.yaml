@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-version: "3.9"
 services:
 
   ngrok:
@@ -29,6 +28,9 @@ services:
       - ./ngrok.yml:/etc/ngrok.yml
     ports:
       - 4040:4040
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+
   zookeeper:
     image: quay.io/debezium/zookeeper:2.7.0.Final
     ports:
@@ -164,7 +166,6 @@ services:
       - ./spark/cache:/root/.ivy2/cache
       - ./lakeview:/opt/lakeview
       - ./demo:/opt/demo
-      - ./hudisync:/opt/hudisync
     entrypoint: >
       /bin/sh -c "
       tail -f /dev/null;
@@ -189,7 +190,6 @@ services:
       - ./spark/cache:/root/.ivy2/cache
       - ./lakeview:/opt/lakeview
       - ./demo:/opt/demo
-      - ./hudisync:/opt/hudisync
     entrypoint: >
       /bin/sh -c "
       tail -f /dev/null;

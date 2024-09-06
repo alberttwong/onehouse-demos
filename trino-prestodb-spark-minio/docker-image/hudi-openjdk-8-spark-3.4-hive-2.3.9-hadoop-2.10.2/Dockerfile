@@ -11,7 +11,7 @@
 # limitations under the License.
 
 ARG ARCH
-FROM eclipse-temurin:8-jre-focal
+FROM eclipse-temurin:8-jdk-focal
 
 ARG SPARK_VERSION=3.4.3
 ARG HADOOP_VERSION=3
@@ -24,7 +24,7 @@ ENV HIVE_HOME=/hive
 
 RUN set -ex; \
     apt-get update; \
-    apt-get install -y python3 python3-pip git vim kafkacat jq; \
+    apt-get install -y python3 python3-pip git vim kafkacat jq maven; \
     rm -rf /var/lib/apt/lists/*
 
 RUN set -xeu; \
@@ -53,7 +53,11 @@ RUN adduser hive
 ENV PATH="${SPARK_HOME}/bin:${PATH}"
 ENV HUDI_CLASSPATH=/root/.ivy2/jars/* 
 
-RUN cd /opt && git clone https://github.com/apache/hudi.git 
+RUN cd /opt && git clone https://github.com/apache/hudi.git && cd hudi && git checkout release-0.15.0 &&mvn clean package -Pintegration-tests -DskipTests 
+
+RUN wget https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/2.10.2/hadoop-aws-2.10.2.jar -P /opt/hudisync && wget https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.271/aws-java-sdk-bundle-1.11.271.jar -P /opt/hudisync && wget https://repo1.maven.org/maven2/org/apache/thrift/libthrift/0.13.0/libthrift-0.13.0.jar -P /opt/hudisync
+
+RUN wget https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/2.10.2/hadoop-aws-2.10.2.jar -P /opt/hudicli && wget https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.271/aws-java-sdk-bundle-1.11.271.jar -P /opt/hudicli && wget https://repo1.maven.org/maven2/org/apache/hudi/hudi-cli-bundle_2.12/0.15.0/hudi-cli-bundle_2.12-0.15.0.jar -P /opt/hudicli && wget https://repo1.maven.org/maven2/org/apache/hudi/hudi-spark3.4-bundle_2.12/0.15.0/hudi-spark3.4-bundle_2.12-0.15.0.jar -P /opt/hudicli
 
 EXPOSE 10213
 
