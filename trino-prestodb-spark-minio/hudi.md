@@ -869,10 +869,47 @@ Again, You can use Hudi CLI to manually schedule and run compaction
 ```java
 docker exec -it openjdk8 /bin/bash
 
-root@adhoc-1:/opt# /opt/hudi/hudi-cli/hudi-cli.sh
-...
-Table command getting loaded
-HoodieSplashScreen loaded
+export HOODIE_ENV_fs_DOT_s3a_DOT_access_DOT_key=admin
+export HOODIE_ENV_fs_DOT_s3a_DOT_secret_DOT_key=password
+export HOODIE_ENV_fs_DOT_s3a_DOT_endpoint=http://minio:9000
+export HOODIE_ENV_fs_DOT_s3a_DOT_aws_DOT_credentials_DOT_provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider
+export CLIENT_JAR=/opt/hudicli/*
+export SPARK_BUNDLE_JAR=/opt/hudicli/hudi-spark-bundle_2.12-0.15.0.jar 
+export CLI_BUNDLE_JAR=/opt/hudicli/hudi-cli-bundle_2.12-0.15.0.jar
+export HUDI_CONF_DIR=/opt/hudi/packaging/hudi-cli-bundle/conf/
+
+root@openjdk8:/spark-3.4.3-bin-hadoop3/bin# /opt/hudi/packaging/hudi-cli-bundle/hudi-cli-with-bundle.sh
+DIR is /opt/hudi/packaging/hudi-cli-bundle
+Inferring CLI_BUNDLE_JAR path assuming this script is under Hudi repo
+Inferring SPARK_BUNDLE_JAR path assuming this script is under Hudi repo
+CLI_BUNDLE_JAR: /opt/hudi/packaging/hudi-cli-bundle/target/hudi-cli-bundle_2.12-0.15.0.jar
+SPARK_BUNDLE_JAR: /opt/hudi/packaging/hudi-cli-bundle/../hudi-spark-bundle/target/hudi-spark-bundle_2.12-0.15.0.jar
+Downloading necessary auxiliary jars for Hudi CLI
+--2024-09-04 18:07:34--  https://repo1.maven.org/maven2/org/glassfish/jakarta.el/3.0.3/jakarta.el-3.0.3.jar
+Resolving repo1.maven.org (repo1.maven.org)... 199.232.196.209, 199.232.192.209, 2a04:4e42:4c::209, ...
+Connecting to repo1.maven.org (repo1.maven.org)|199.232.196.209|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 237826 (232K) [application/java-archive]
+Saving to: ‘auxlib/jakarta.el-3.0.3.jar’
+
+jakarta.el-3.0.3.jar                         100%[===========================================================================================>] 232.25K  --.-KB/s    in 0.03s
+
+2024-09-04 18:07:35 (7.35 MB/s) - ‘auxlib/jakarta.el-3.0.3.jar’ saved [237826/237826]
+
+--2024-09-04 18:07:35--  https://repo1.maven.org/maven2/jakarta/el/jakarta.el-api/3.0.3/jakarta.el-api-3.0.3.jar
+Resolving repo1.maven.org (repo1.maven.org)... 199.232.196.209, 199.232.192.209, 2a04:4e42:4c::209, ...
+Connecting to repo1.maven.org (repo1.maven.org)|199.232.196.209|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 79816 (78K) [application/java-archive]
+Saving to: ‘auxlib/jakarta.el-api-3.0.3.jar’
+
+jakarta.el-api-3.0.3.jar                     100%[===========================================================================================>]  77.95K  --.-KB/s    in 0.02s
+
+2024-09-04 18:07:35 (4.47 MB/s) - ‘auxlib/jakarta.el-api-3.0.3.jar’ saved [79816/79816]
+
+Client jar location not set, please set it in conf/hudi-env.sh
+Running : java -cp /opt/hudi/packaging/hudi-cli-bundle/conf:/opt/hudi/packaging/hudi-cli-bundle/auxlib/*:/spark/*:/spark/jars/*:/etc/hadoop/conf:/etc/spark/conf:/opt/hudi/packaging/hudi-cli-bundle/target/hudi-cli-bundle_2.12-0.15.0.jar:/opt/hudi/packaging/hudi-cli-bundle/../hudi-spark-bundle/target/hudi-spark-bundle_2.12-0.15.0.jar: -DSPARK_CONF_DIR=/etc/spark/conf -DHADOOP_CONF_DIR=/etc/hadoop/conf org.apache.hudi.cli.Main
+Main called
 ===================================================================
 *         ___                          ___                        *
 *        /\__\          ___           /\  \           ___         *
@@ -887,20 +924,27 @@ HoodieSplashScreen loaded
 *        \/__/          \/__/         \/__/    Apache Hudi CLI    *
 *                                                                 *
 ===================================================================
+733  [main] INFO  org.apache.hudi.cli.Main [] - Starting Main v0.15.0 using Java 1.8.0_422 on openjdk8 with PID 34 (/opt/hudi/packaging/hudi-cli-bundle/target/hudi-cli-bundle_2.12-0.15.0.jar started by root in /spark-3.4.3-bin-hadoop3/bin)
+740  [main] INFO  org.apache.hudi.cli.Main [] - No active profile set, falling back to 1 default profile: "default"
+Table command getting loaded
+Sep 04, 2024 6:07:36 PM org.jline.utils.Log logr
+WARNING: The Parser of class org.springframework.shell.jline.ExtendedDefaultParser does not support the CompletingParsedLine interface. Completion with escaped or quoted words won't work correctly.
+1486 [main] INFO  org.apache.hudi.cli.Main [] - Started Main in 0.907 seconds (JVM running for 1.517)
 
-Welcome to Apache Hudi CLI. Please type help if you are looking for help.
-hudi->connect --path /user/hive/warehouse/stock_ticks_mor
-18/09/24 06:59:34 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
-18/09/24 06:59:35 INFO table.HoodieTableMetaClient: Loading HoodieTableMetaClient from /user/hive/warehouse/stock_ticks_mor
-18/09/24 06:59:35 INFO util.FSUtils: Hadoop Configuration: fs.defaultFS: [hdfs://namenode:8020], Config:[Configuration: core-default.xml, core-site.xml, mapred-default.xml, mapred-site.xml, yarn-default.xml, yarn-site.xml, hdfs-default.xml, hdfs-site.xml], FileSystem: [DFS[DFSClient[clientName=DFSClient_NONMAPREDUCE_-1261652683_11, ugi=root (auth:SIMPLE)]]]
-18/09/24 06:59:35 INFO table.HoodieTableConfig: Loading table properties from /user/hive/warehouse/stock_ticks_mor/.hoodie/hoodie.properties
-18/09/24 06:59:36 INFO table.HoodieTableMetaClient: Finished Loading Table of type MERGE_ON_READ(version=1) from /user/hive/warehouse/stock_ticks_mor
+hudi->connect --path s3a://warehouse/stock_ticks_mor
+17945 [main] WARN  org.apache.hadoop.util.NativeCodeLoader [] - Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+18394 [main] INFO  org.apache.hudi.common.table.HoodieTableMetaClient [] - Loading HoodieTableMetaClient from s3a://warehouse/stock_ticks_mor
+18429 [main] INFO  org.apache.hudi.common.table.HoodieTableConfig [] - Loading table properties from s3a://warehouse/stock_ticks_mor/.hoodie/hoodie.properties
+18441 [main] INFO  org.apache.hudi.common.table.HoodieTableMetaClient [] - Finished Loading Table of type MERGE_ON_READ(version=1, baseFileFormat=PARQUET) from s3a://warehouse/stock_ticks_mor
 Metadata for table stock_ticks_mor loaded
-hoodie:stock_ticks_mor->compactions show all
-20/02/10 03:41:32 INFO timeline.HoodieActiveTimeline: Loaded instants [[20200210015059__clean__COMPLETED], [20200210015059__deltacommit__COMPLETED], [20200210022758__clean__COMPLETED], [20200210022758__deltacommit__COMPLETED], [==>20200210023843__compaction__REQUESTED]]
-___________________________________________________________________
-| Compaction Instant Time| State    | Total FileIds to be Compacted|
-|==================================================================|
+
+hudi:stock_ticks_mor->compactions show all
+42012 [main] INFO  org.apache.hudi.common.table.timeline.HoodieActiveTimeline [] - Loaded instants upto : Option{val=[20240905011929870__deltacommit__COMPLETED__20240905011934536]}
+╔═════════════════════════╤═══════╤═══════════════════════════════╗
+║ Compaction Instant Time │ State │ Total FileIds to be Compacted ║
+╠═════════════════════════╧═══════╧═══════════════════════════════╣
+║ (empty)                                                         ║
+╚═════════════════════════════════════════════════════════════════╝
 
 # Schedule a compaction. This will use Spark Launcher to schedule compaction
 hoodie:stock_ticks_mor->compaction schedule --hoodieConfigs hoodie.compact.inline.max.delta.commits=1
