@@ -175,6 +175,13 @@ inorder to run Hive queries against those tables.
 ```java
 docker exec -it openjdk8 /bin/bash
 
+# If needed, we need to modify the existing run_sync_tool.sh with additional classpaths `/opt/hudisync/*:`.  Save and exit.
+vi /opt/hudi/hudi-sync/hudi-hive-sync/run_sync_tool.sh
+
+# The new java launch should look like
+echo "Running Command : java -cp /opt/hudisync/*:${HADOOP_HIVE_JARS}:${HADOOP_CONF_DIR}:$HUDI_HIVE_UBER_JAR org.apache.hudi.hive.HiveSyncTool $@"
+java -cp /opt/hudisync/*:$HUDI_HIVE_UBER_JAR:${HADOOP_HIVE_JARS}:${HADOOP_CONF_DIR} org.apache.hudi.hive.HiveSyncTool "$@"
+
 # This command takes in HiveServer URL and COW Hudi table location in S3 and sync the S3 state to Hive
 /opt/hudi/hudi-sync/hudi-hive-sync/run_sync_tool.sh  \
 --metastore-uris 'thrift://hive-metastore:9083' \
@@ -876,9 +883,10 @@ export HOODIE_ENV_fs_DOT_s3a_DOT_aws_DOT_credentials_DOT_provider=org.apache.had
 export CLIENT_JAR=/opt/hudicli/hadoop-aws-2.10.2.jar:/opt/hudicli/aws-java-sdk-bundle-1.11.271.jar
 export SPARK_BUNDLE_JAR=/opt/hudicli/hudi-spark3.4-bundle_2.12-0.15.0.jar
 export CLI_BUNDLE_JAR=/opt/hudicli/hudi-cli-bundle_2.12-0.15.0.jar
-export HUDI_CONF_DIR=/opt/hudi/packaging/hudi-cli-bundle/conf/
+export HUDI_CONF_DIR=/opt/hudicli/conf/
+mkdir /opt/hudi/conf && echo "hoodie.fs.atomic_creation.support                s3a" >> /opt/hudicli/conf/hudi-defaults.conf
 
-root@openjdk8:/spark-3.4.3-bin-hadoop3/bin# /opt/hudi/packaging/hudi-cli-bundle/hudi-cli-with-bundle.sh
+root@openjdk8:/spark-3.4.3-bin-hadoop3/bin# cd /opt/hudi/packaging/hudi-cli-bundle && /opt/hudi/packaging/hudi-cli-bundle/hudi-cli-with-bundle.sh
 DIR is /opt/hudi/packaging/hudi-cli-bundle
 Inferring CLI_BUNDLE_JAR path assuming this script is under Hudi repo
 Inferring SPARK_BUNDLE_JAR path assuming this script is under Hudi repo
