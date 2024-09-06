@@ -873,8 +873,8 @@ export HOODIE_ENV_fs_DOT_s3a_DOT_access_DOT_key=admin
 export HOODIE_ENV_fs_DOT_s3a_DOT_secret_DOT_key=password
 export HOODIE_ENV_fs_DOT_s3a_DOT_endpoint=http://minio:9000
 export HOODIE_ENV_fs_DOT_s3a_DOT_aws_DOT_credentials_DOT_provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider
-export CLIENT_JAR=/opt/hudicli/*
-export SPARK_BUNDLE_JAR=/opt/hudicli/hudi-spark-bundle_2.12-0.15.0.jar 
+export CLIENT_JAR=/opt/hudicli/hadoop-aws-2.10.2.jar:/opt/hudicli/aws-java-sdk-bundle-1.11.271.jar
+export SPARK_BUNDLE_JAR=/opt/hudicli/hudi-spark3.4-bundle_2.12-0.15.0.jar
 export CLI_BUNDLE_JAR=/opt/hudicli/hudi-cli-bundle_2.12-0.15.0.jar
 export HUDI_CONF_DIR=/opt/hudi/packaging/hudi-cli-bundle/conf/
 
@@ -949,25 +949,26 @@ hudi:stock_ticks_mor->compactions show all
 # Schedule a compaction. This will use Spark Launcher to schedule compaction
 hoodie:stock_ticks_mor->compaction schedule --hoodieConfigs hoodie.compact.inline.max.delta.commits=1
 ....
-Compaction successfully completed for 20180924070031
+Attempted to schedule compaction for 20240905045740967
 
 # Now refresh and check again. You will see that there is a new compaction requested
 
-hoodie:stock_ticks_mor->refresh
-18/09/24 07:01:16 INFO table.HoodieTableMetaClient: Loading HoodieTableMetaClient from /user/hive/warehouse/stock_ticks_mor
-18/09/24 07:01:16 INFO table.HoodieTableConfig: Loading table properties from /user/hive/warehouse/stock_ticks_mor/.hoodie/hoodie.properties
-18/09/24 07:01:16 INFO table.HoodieTableMetaClient: Finished Loading Table of type MERGE_ON_READ(version=1) from /user/hive/warehouse/stock_ticks_mor
-Metadata for table stock_ticks_mor loaded
+hudi:stock_ticks_mor->refresh
+221115 [main] INFO  org.apache.hudi.common.table.HoodieTableMetaClient [] - Loading HoodieTableMetaClient from s3a://warehouse/stock_ticks_mor
+221121 [main] INFO  org.apache.hudi.common.table.HoodieTableConfig [] - Loading table properties from s3a://warehouse/stock_ticks_mor/.hoodie/hoodie.properties
+221125 [main] INFO  org.apache.hudi.common.table.HoodieTableMetaClient [] - Finished Loading Table of type MERGE_ON_READ(version=1, baseFileFormat=PARQUET) from s3a://warehouse/stock_ticks_mor
+Metadata for table stock_ticks_mor refreshed.
 
-hoodie:stock_ticks_mor->compactions show all
-18/09/24 06:34:12 INFO timeline.HoodieActiveTimeline: Loaded instants [[20180924041125__clean__COMPLETED], [20180924041125__deltacommit__COMPLETED], [20180924042735__clean__COMPLETED], [20180924042735__deltacommit__COMPLETED], [==>20180924063245__compaction__REQUESTED]]
-___________________________________________________________________
-| Compaction Instant Time| State    | Total FileIds to be Compacted|
-|==================================================================|
-| 20180924070031         | REQUESTED| 1                            |
+hudi:stock_ticks_mor->compactions show all
+264893 [main] INFO  org.apache.hudi.common.table.timeline.HoodieActiveTimeline [] - Loaded instants upto : Option{val=[==>20240905045740967__compaction__REQUESTED__20240905045745721]}
+╔═════════════════════════╤═══════════╤═══════════════════════════════╗
+║ Compaction Instant Time │ State     │ Total FileIds to be Compacted ║
+╠═════════════════════════╪═══════════╪═══════════════════════════════╣
+║ 20240905045740967       │ REQUESTED │ 1                             ║
+╚═════════════════════════╧═══════════╧═══════════════════════════════╝
 
 # Execute the compaction. The compaction instant value passed below must be the one displayed in the above "compactions show all" query
-hoodie:stock_ticks_mor->compaction run --compactionInstant  20180924070031 --parallelism 2 --sparkMemory 1G  --schemaFilePath /var/demo/config/schema.avsc --retry 1  
+hoodie:stock_ticks_mor->compaction run --compactionInstant  20240905045740967 --parallelism 2 --sparkMemory 1G  --schemaFilePath /opt/demo/config/schema.avsc --retry 1  
 ....
 Compaction successfully completed for 20180924070031
 
