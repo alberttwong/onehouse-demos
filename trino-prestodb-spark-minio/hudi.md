@@ -175,6 +175,8 @@ inorder to run Hive queries against those tables.
 ```java
 docker exec -it openjdk8 /bin/bash
 
+export HUDI_CLASSPATH=/opt/hudisync/*
+
 # If needed, we need to modify the existing run_sync_tool.sh with additional classpaths `/opt/hudisync/*:`.  Save and exit.
 vi /opt/hudi/hudi-sync/hudi-hive-sync/run_sync_tool.sh
 
