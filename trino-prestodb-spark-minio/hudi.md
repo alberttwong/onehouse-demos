@@ -1231,6 +1231,8 @@ Splits: 1 total, 1 done (100.00%)
 
 This concludes our demonstration. To fully appreciate Apache Hudi's capabilities, we recommend conducting a similar test with larger datasets. For example, try a 10GB table with 10MB incremental updates and perform Snapshot queries. You'll witness Hudi's exceptional performance, especially in scenarios where users demand real-time data updates regardless of the table's size or incoming data volume. This is a key advantage of Hudi's open table format (_H_ for hadoop _U_ for upserts _D_ for deletes _I_ for incrementals), designed to efficiently handle incremental updates.
 
+Finally let's connect! Join our Slack community to share your thoughts on the Hudi Docker demo. We're eager to hear your feedback on what you enjoyed, what you didn't, and any issues you encountered. Your insights will help us improve the demo for everyone.
+
 ## Additional Demos and Resources
 
 ### Case Study: Walmart
