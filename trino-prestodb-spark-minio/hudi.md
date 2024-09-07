@@ -1229,27 +1229,34 @@ Splits: 1 total, 1 done (100.00%)
 0.19 [197 rows, 481KB] [1.01K rows/s, 2.42MB/s]
 ```
 
+This concludes our demonstration. To fully appreciate Apache Hudi's capabilities, we recommend conducting a similar test with larger datasets. For example, try a 10GB table with 10MB incremental updates and perform Snapshot queries. You'll witness Hudi's exceptional performance, especially in scenarios where users demand real-time data updates regardless of the table's size or incoming data volume. This is a key advantage of Hudi's open table format (_H_ for hadoop _U_ for upserts _D_ for deletes _I_ for incrementals), designed to efficiently handle incremental updates.
 
-This brings the demo to an end.
+Finally let's connect! Join our Slack community to share your thoughts on the Hudi Docker demo. We're eager to hear your feedback on what you enjoyed, what you didn't, and any issues you encountered. Your insights will help us improve the demo for everyone.
 
-## Additional Demos
+## Additional Demos and Resources
 
-### Apache xTable
+### Case Study: Walmart
 
-You can easily add Apache xTable to this demo.   Just follow the steps in the Apache xTable Quickstart using this docker compose.
-
-### Conduktor
-
-Conduktor is a web based way for you see your kafka environment.   Just use the ngrok kafka URL to connect with no username and password.
-
-### Debezium
-
-You can extend this demo to a Database CDC demo by adding a database like postgresSQL and adding the Debezium Kafka Connect container images into this docker compose. 
+This is an article about Walmart’s migration to a Lakehouse architecture. It discusses the challenges of using a traditional Data Lake and the benefits of using a Lakehouse. The article also details Walmart’s evaluation of different Lakehouse technologies. Ultimately, Walmart chose Apache Hudi to power their Lakehouse. https://medium.com/walmartglobaltech/lakehouse-at-fortune-1-scale-480bcb10391b
 
 ### Onehouse Lakeview
 
 Onehouse LakeView is a free observability service designed specifically for data lakehouses. It provides data engineers with essential monitoring capabilities and insights to effectively manage and operate their tables.  Only metadata is passed to Onehouse Lakeview.
 
+1. Sign up for Onehouse Lakeview at https://cloud.onehouse.ai/lakeview/signup and get an API token.
+2. Shell into the spark container `docker exec -it spark /bin/bash`
+3. Grab the app `wget https://github.com/onehouseinc/LakeView/releases/download/prod-34/LakeView-release-v0.14.0-all.jar -P /opt/lakeview`
+4. Run the Metadata Extractor Tool `java -jar /opt/lakeview/LakeView-release-v0.14.0-all.jar -p /opt/lakeview/hudi.yaml`
+5. View the report in Onehouse Lakeview at http://cloud.onehouse.ai
+
+### Apache xTable
+
+Apache XTable is an open-source project that aims to simplify data lake operations by providing a common model for table representation. It acts as a cross-table converter, facilitating interoperability between different lakehouse table formats like Apache Hudi, Apache Iceberg, and Delta Lake. You can easily add Apache xTable to this demo.   Just follow the steps in the Apache xTable Quickstart using this docker compose.
+
 ### Onehouse Cloud
 
-Connect this environment to Onehouse Cloud by configuring the Onehouse Cloud Kafka Source to use the ngrok kafka URL.
+Onehouse Cloud is a platform that simplifies the process of building and managing data lakes. It offers a managed lakehouse solution, which combines the best features of data warehouses and data lakes. This means you can enjoy the scalability and flexibility of a data lake while also benefiting from the structured and query-optimized capabilities of a data warehouse. Connect this environment to Onehouse Cloud by configuring the Onehouse Cloud Kafka Source to use the ngrok kafka URL.
+
+### Hudi on Amazon EMR
+
+In addition to offering Apache Hudi, Amazon provides a comprehensive tutorial on working with Hudi on Amazon EMR. This tutorial covers launching the interactive Spark shell, using Spark submit, and utilizing Amazon EMR Notebooks. It even delves into alternative methods like the Hudi DeltaStreamer utility for writing to your dataset. You can find the tutorial here:   https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-hudi-work-with-dataset.html
