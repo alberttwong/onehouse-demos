@@ -1240,12 +1240,16 @@ You can easily add Apache xTable to this demo.   Just follow the steps in the Ap
 
 ### Conduktor
 
-Conduktor is a web based way for you see your kafka environment.   Just use the ngrok kafka URL to connect.   
+Conduktor is a web based way for you see your kafka environment.   Just use the ngrok kafka URL to connect with no username and password.
 
 ### Debezium
 
 You can extend this demo to a Database CDC demo by adding a database like postgresSQL and adding the Debezium Kafka Connect container images into this docker compose. 
 
-### Onehouse.ai
+### Onehouse Lakeview
 
-You can hook up this environment to Onehouse.ai by using this demo as a kafka source and using the ngrok kafka URL.
+Onehouse LakeView is a free observability service designed specifically for data lakehouses. It provides data engineers with essential monitoring capabilities and insights to effectively manage and operate their tables.  Only metadata is passed to Onehouse Lakeview.
+
+### Onehouse Cloud
+
+Connect this environment to Onehouse Cloud by configuring the Onehouse Cloud Kafka Source to use the ngrok kafka URL.
