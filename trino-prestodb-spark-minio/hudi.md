@@ -933,11 +933,11 @@ mc alias set minio http://minio:9000 admin password
 mc cp /opt/demo/config/schema.avsc minio/warehouse
 
 cd /opt/hudicli && /opt/hudi/packaging/hudi-cli-bundle/hudi-cli-with-bundle.sh
-DIR is /opt/hudi/packaging/hudi-cli-bundle
+DIR is /opt/hudicli
 Inferring CLI_BUNDLE_JAR path assuming this script is under Hudi repo
 Inferring SPARK_BUNDLE_JAR path assuming this script is under Hudi repo
-CLI_BUNDLE_JAR: /opt/hudi/packaging/hudi-cli-bundle/target/hudi-cli-bundle_2.12-0.15.0.jar
-SPARK_BUNDLE_JAR: /opt/hudi/packaging/hudi-cli-bundle/../hudi-spark-bundle/target/hudi-spark-bundle_2.12-0.15.0.jar
+CLI_BUNDLE_JAR: /opt/hudicli/hudi-cli-bundle_2.12-0.15.0.jar
+SPARK_BUNDLE_JAR: /opt/hudicli/hudi-spark3.4-bundle_2.12-0.15.0.jar
 Downloading necessary auxiliary jars for Hudi CLI
 --2024-09-04 18:07:34--  https://repo1.maven.org/maven2/org/glassfish/jakarta.el/3.0.3/jakarta.el-3.0.3.jar
 Resolving repo1.maven.org (repo1.maven.org)... 199.232.196.209, 199.232.192.209, 2a04:4e42:4c::209, ...
