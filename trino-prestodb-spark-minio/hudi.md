@@ -1254,3 +1254,7 @@ Apache XTable is an open-source project that aims to simplify data lake operatio
 ### Onehouse Cloud
 
 Onehouse Cloud is a platform that simplifies the process of building and managing data lakes. It offers a managed lakehouse solution, which combines the best features of data warehouses and data lakes. This means you can enjoy the scalability and flexibility of a data lake while also benefiting from the structured and query-optimized capabilities of a data warehouse. Connect this environment to Onehouse Cloud by configuring the Onehouse Cloud Kafka Source to use the ngrok kafka URL.
+
+### Hudi on Amazon EMR
+
+In addition to offering Apache Hudi, Amazon provides a comprehensive tutorial on working with Hudi on Amazon EMR. This tutorial covers launching the interactive Spark shell, using Spark submit, and utilizing Amazon EMR Notebooks. It even delves into alternative methods like the Hudi DeltaStreamer utility for writing to your dataset. You can find the tutorial here:   https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-hudi-work-with-dataset.html
