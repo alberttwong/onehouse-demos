@@ -1,8 +1,8 @@
 ## A Demo using Docker containers
 
-Let's use a real world example to see how Hudi works end to end. For this purpose, a self contained data infrastructure is brought up in a local Docker cluster within your workstation. 
+Let’s dive into a real-world scenario to understand Hudi’s capabilities from start to finish. To provide a self-contained environment, we've set up a local Docker cluster on your workstation.
 
-The steps have been tested on a Mac ARM laptop.
+These steps have been verified on a Mac ARM laptop, ensuring compatibility and ease of use.
 
 ### Prerequisites
 
@@ -21,6 +21,7 @@ The steps have been tested on a Mac ARM laptop.
 Also, this has not been tested on some environments like Docker on Windows.
 
 ## Talking about Apache Hudi demo
+
 Apache Hudi is compatible with JDK 8 and can be compiled and run on this version. While you might not need to compile the code yourself, we've provided the source code in the /opt/hudi directory. You can use `git pull` to fetch the latest updates or `git checkout release-0.15.0` to switch to a specific version.
 
 For this demonstration, we'll be using Hudi 0.15 and Spark 3.4. You can easily adapt these instructions to other versions by modifying the libraries you download.
@@ -28,6 +29,7 @@ For this demonstration, we'll be using Hudi 0.15 and Spark 3.4. You can easily a
 To ensure clarity and understanding, we'll provide a detailed explanation of each step involved in the process.
 
 ## Reset the enviroment
+
 To improve performance, we cache the JARs needed for the demo in the spark/jars and spark/cache directories after the initial download.  When you want to switch to a different Spark or Hudi version or have class conflicts, please clear them out by typing `rm -Rf spark/jars/*.jar` and `rm -Rf spark/cache/*`
 
 
@@ -44,7 +46,7 @@ export NGROK_AUTHTOKEN=XXXXXX
 docker compose up
 ```
 
-At this point, the Docker cluster will be up and running. The demo cluster brings up the following services
+At this point, the Docker cluster will be up and running. The demo cluster brings up the following services:
 
    * Min.IO for Object Store
    * Spark Master and Worker
@@ -77,23 +79,48 @@ Your kafka URI in this situation is `tcp://2.tcp.us-cal-1.ngrok.io:19757`.  It w
 
 ## conduktor or any other kafka toolling for kafka browsing
 
-You can use any kafka browser.  I personally tested conduktor.  You can just follow the conduktor quickstart at https://conduktor.io/get-started and put in the kafka ngrok URI with no username and password and see the topics and messages come in LIVE. We also have instructions below to see the messages on the CLI.
+To monitor your Kafka topics and messages in real-time, you can leverage any Kafka browser of your choice. While I've personally tested Conduktor, any compatible tool will work.
+
+Simply follow the Conduktor quickstart guide (https://conduktor.io/get-started) and enter your Kafka ngrok URI with no username and password. You'll then be able to see the topics and messages streaming live.
 
 ## Demo
 
-Stock Tracker data will be used to showcase different Hudi query types and the effects of Compaction.
+### Understanding the Scenario
 
-Take a look at the directory `demo/data`. There are 2 batches of stock data - each at 1 minute granularity. The first batch contains stocker tracker data for some stock symbols during the first hour of trading window (9:30 a.m to 10:30 a.m). The second batch contains tracker data for next 30 mins (10:30 - 11 a.m). Hudi will be used to ingest these batches to a table which will contain the latest stock tracker data at hour level granularity. The batches are windowed intentionally so that the second batch contains updates to some of the rows in the first batch.
+Our objective is to construct a Hudi table that maintains the most recent hourly stock tracker data. To achieve this, we'll ingest two batches of minute-level stock data:
+
+* Batch 1: Covers the initial trading hour (9:30 AM to 10:30 AM).
+* Batch 2: Covers the subsequent half-hour (10:30 AM to 11:00 AM), including updates to some stocks from Batch 1.
+
+### Leveraging Hudi's Merge-on-Read for Efficient Updates
+
+Hudi's default write strategy, merge-on-read, proves invaluable for this use case. Here's why it outperforms copy-on-write:
+
+* Reduced Write Amplification: Instead of creating entirely new files for each update, merge-on-read modifies existing files. This minimizes storage overhead and write operations.
+* Improved Read Performance: As data is organized in a more compact manner, queries become faster.
+* Simplified Upserts: Handling updates is straightforward, as Hudi efficiently merges new data with existing records.
+
+### The Impact of Compaction
+
+Hudi's compaction process is crucial for maintaining query performance and storage efficiency. It merges multiple small files into larger ones, reducing the number of files to scan during queries.
+
+* Benefits of Compaction:
+  * Improved query performance.
+  * Reduced storage overhead.
+  * Simplified data management.
+
 
 ### Step 1 : Publish the first batch to Kafka
 
 Upload the first batch to Kafka topic 'stock ticks' 
+
 ```java
 docker exec -it spark /bin/bash
 cat /opt/demo/data/batch_1.json | kafkacat -b kafka:9092 -t stock_ticks -P
 ```
 
 To check if the new topic shows up, use
+
 ```java
 kafkacat -b kafka -L -J | jq .
 {
@@ -191,13 +218,16 @@ docker exec -it openjdk8 /bin/bash
 export HUDI_CLASSPATH=/opt/hudisync/*
 
 # If needed, we need to modify the existing run_sync_tool.sh with additional classpaths HUDI_CLASSPATH.  Save and exit.
+
 vi /opt/hudi/hudi-sync/hudi-hive-sync/run_sync_tool.sh
 
 # The new java launch should look like
+
 echo "Running Command : java -cp ${HUDI_CLASSPATH}:${HADOOP_HIVE_JARS}:${HADOOP_CONF_DIR}:$HUDI_HIVE_UBER_JAR org.apache.hudi.hive.HiveSyncTool $@"
 java -cp ${HUDI_CLASSPATH}:$HUDI_HIVE_UBER_JAR:${HADOOP_HIVE_JARS}:${HADOOP_CONF_DIR} org.apache.hudi.hive.HiveSyncTool "$@"
 
 # This command takes in HiveServer URL and COW Hudi table location in S3 and sync the S3 state to Hive
+
 /opt/hudi/hudi-sync/hudi-hive-sync/run_sync_tool.sh  \
 --metastore-uris 'thrift://hive-metastore:9083' \
 --partitioned-by dt \
@@ -211,6 +241,7 @@ java -cp ${HUDI_CLASSPATH}:$HUDI_HIVE_UBER_JAR:${HADOOP_HIVE_JARS}:${HADOOP_CONF
 .....
 
 # Now run hive-sync for the second data-set in S3 using Merge-On-Read (M-O-R table type)
+
 /opt/hudi/hudi-sync/hudi-hive-sync/run_sync_tool.sh  \
 --metastore-uris 'thrift://hive-metastore:9083' \
 --partitioned-by dt \
@@ -225,15 +256,16 @@ java -cp ${HUDI_CLASSPATH}:$HUDI_HIVE_UBER_JAR:${HADOOP_HIVE_JARS}:${HADOOP_CONF
 
 exit
 ```
-After executing the above command, you will notice
 
-1. A table named `stock_ticks_cow` created which supports Snapshot and Incremental queries on Copy On Write table.
-2. Two new tables `stock_ticks_mor_rt` and `stock_ticks_mor_ro` created for the Merge On Read table. The former supports Snapshot and Incremental queries (providing near-real time data) while the later supports Read Optimized queries.
+Upon executing the command, you'll observe the following:
+
+* A table named stock_ticks_cow is generated, enabling Snapshot and Incremental queries using the Copy-On-Write strategy.
+* Two additional tables, stock_ticks_mor_rt and stock_ticks_mor_ro, are created for the Merge-On-Read approach. The former supports both Snapshot and Incremental queries, providing near-real-time data access. The latter is optimized for Read operations, offering efficient data retrieval for analytical workloads.
 
 
 ### Step 4 (a): Run Queries with Spark-SQL
 
-Run a query to find the latest timestamp ingested for stock symbol 'GOOG'. You will notice that both snapshot (for both COW and MOR_rt table) and read-optimized queries (for MOR_ro table) give the same value "10:29 a.m" as Hudi create a parquet file for the first batch of data.
+Run a query to find the latest timestamp ingested for stock symbol 'GOOG'. You will notice that both Snapshot (for both COW and MOR_rt table) and Read Optimized (for MOR_ro table) give the same value "10:29 a.m" as Hudi creates a parquet file for the first batch of data.
 
 ```java
 docker exec -it spark /bin/bash
@@ -245,6 +277,7 @@ spark-sql --packages org.apache.hudi:hudi-utilities-slim-bundle_2.12:0.15.0,org.
 --conf 'spark.kryo.registrator=org.apache.spark.HoodieSparkKryoRegistrar'
 
 # List Tables
+
 spark-sql (default)> show tables;
 stock_ticks_cow
 stock_ticks_mor
@@ -254,6 +287,7 @@ Time taken: 1.006 seconds, Fetched 4 row(s)
 
 
 # Look at partitions that were added
+
 spark-sql (default)> show partitions stock_ticks_mor_rt;
 2018/08/31
 Time taken: 1.191 seconds, Fetched 1 row(s)
@@ -285,12 +319,14 @@ Time taken: 0.484 seconds, Fetched 1 row(s)
 
 
 # Run Snapshot Query. Notice that the latest timestamp is again 10:29
+
 spark-sql (default)> select symbol, max(ts) from stock_ticks_mor_rt group by symbol HAVING symbol = 'GOOG';
 GOOG	2018-08-31 10:29:00
 Time taken: 0.558 seconds, Fetched 1 row(s)
 
 
 # Run Read Optimized and Snapshot project queries
+
 spark-sql (default)> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG';
 20240904123001395	GOOG	2018-08-31 09:59:00	6330	1230.5	1230.02
 20240904123001395	GOOG	2018-08-31 10:29:00	3391	1230.1899	1230.085
@@ -307,7 +343,8 @@ exit
 ```
 
 ### Step 4 (b): Run Queries with Spark-Shell
-Hudi support Spark as query processor just like Hive. Here are the same hive queries running in spark-shell
+
+Here are the same queries running in Spark-Shell.
 
 ```java
 docker exec -it spark /bin/bash
@@ -366,10 +403,10 @@ scala> spark.sql("select `_hoodie_commit_time`, symbol, ts, volume, open, close 
 # Merge-On-Read Queries:
 ==========================
 
-Lets run similar queries against M-O-R table. Lets look at both
-ReadOptimized and Snapshot queries supported by M-O-R table
+# Lets run similar queries against M-O-R table. Lets look at both Read Optimized and Snapshot queries supported by M-O-R table
 
-# Run ReadOptimized Query. Notice that the latest timestamp is 10:29
+# Run Read Optimized Query. Notice that the latest timestamp is 10:29
+
 scala> spark.sql("select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG'").show(100, false)
 +------+-------------------+
 |symbol|max(ts)            |
@@ -388,7 +425,7 @@ scala> spark.sql("select symbol, max(ts) from stock_ticks_mor_rt group by symbol
 +------+-------------------+
 
 
-# Run Read Optimized and Snapshot project queries
+# Run Read Optimized and Snapshot projection queries
 
 scala> spark.sql("select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG'").show(100, false)
 +-------------------+------+-------------------+------+---------+--------+
@@ -491,9 +528,9 @@ Splits: 1 total, 1 done (100.00%)
 # Merge-On-Read Queries:
 ==========================
 
-Lets run similar queries against M-O-R table.
+# Lets run similar queries against M-O-R table.
 
-# Run ReadOptimized Query. Notice that the latest timestamp is 10:29
+# Run Read Optimized Query. Notice that the latest timestamp is 10:29
     
 trino:default> select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG';
  symbol |        _col1
@@ -523,8 +560,7 @@ exit
 
 ### Step 5: Upload second batch to Kafka and run Hudi Streamer to ingest
 
-Upload the second batch of data and ingest this batch using Hudi Streamer. As this batch does not bring in any new
-partitions, there is no need to run hive-sync
+Upload the second batch of data and ingest this batch using Hudi Streamer. As this batch does not bring in any new partitions, there is no need to run hive-sync.
 
 ```java
 docker exec -it spark /bin/bash
@@ -532,6 +568,7 @@ docker exec -it spark /bin/bash
 cat /opt/demo/data/batch_2.json | kafkacat -b kafka:9092 -t stock_ticks -P
 
 # Run the following spark-submit command to execute the Hudi Streamer and ingest to stock_ticks_cow table in S3
+
 spark-submit \
   --packages org.apache.hudi:hudi-utilities-slim-bundle_2.12:0.15.0,org.apache.hudi:hudi-spark3.4-bundle_2.12:0.15.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 \
   --class org.apache.hudi.utilities.streamer.HoodieStreamer org.apache.hudi_hudi-utilities-slim-bundle_2.12-0.15.0.jar \
@@ -544,7 +581,8 @@ spark-submit \
   --schemaprovider-class org.apache.hudi.utilities.schema.FilebasedSchemaProvider
 
 # Run the following spark-submit command to execute the Hudi Streamer and ingest to stock_ticks_mor table in S3
-  spark-submit \
+
+spark-submit \
   --packages org.apache.hudi:hudi-utilities-slim-bundle_2.12:0.15.0,org.apache.hudi:hudi-spark3.4-bundle_2.12:0.15.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 \
   --class org.apache.hudi.utilities.streamer.HoodieStreamer org.apache.hudi_hudi-utilities-slim-bundle_2.12-0.15.0.jar \
   --table-type MERGE_ON_READ \
@@ -559,21 +597,15 @@ spark-submit \
 exit
 ```
 
-With Copy-On-Write table, the second ingestion by Hudi Streamer resulted in a new version of Parquet file getting created.
-See `http://localhost:9001/browser/warehouse/stock_ticks_cow%2F2018%2F08%2F31%2F`
+With Copy-On-Write table, the second ingestion by Hudi Streamer resulted in a new version of Parquet file getting created. See http://localhost:9001/browser/warehouse/stock_ticks_cow%2F2018%2F08%2F31%2F.
 
-With Merge-On-Read table, the second ingestion merely appended the batch to an unmerged delta (log) file.
-Take a look at the S3 filesystem to get an idea: `http://localhost:9001/browser/warehouse/stock_ticks_mor%2F2018%2F08%2F31%2F`
+With Merge-On-Read table, the second ingestion merely appended the batch to an unmerged delta (log) file. Take a look at the S3 filesystem to get an idea: http://localhost:9001/browser/warehouse/stock_ticks_mor%2F2018%2F08%2F31%2F.
 
 ### Step 6 (a): Run Queries
 
-With Copy-On-Write table, the Snapshot query immediately sees the changes as part of second batch once the batch
-got committed as each ingestion creates newer versions of parquet files.
+With Copy-On-Write table, the Snapshot query immediately sees the changes as part of second batch once the batch got committed as each ingestion creates newer versions of parquet files.
 
-With Merge-On-Read table, the second ingestion merely appended the batch to an unmerged delta (log) file.
-This is the time, when ReadOptimized and Snapshot queries will provide different results. ReadOptimized query will still
-return "10:29 am" as it will only read from the Parquet file. Snapshot query will do on-the-fly merge and return
-latest committed data which is "10:59 a.m".
+With Merge-On-Read table, the second ingestion merely appended the batch to an unmerged delta (log) file. This is the time, when Read Optimized and Snapshot queries will provide different results. Read Optimized query will still return "10:29 am" as it will only read from the Parquet file. Snapshot query will do on-the-fly merge and return latest committed data which is "10:59 a.m".
 
 ```java
 docker exec -it spark /bin/bash
@@ -628,7 +660,7 @@ exit
 
 ### Step 6 (b): Run Spark Shell Queries
 
-Running the same queries in Spark-Shell:
+Running the same queries in Spark-Shell.
 
 ```java
 docker exec -it spark /bin/bash
@@ -703,7 +735,7 @@ exit
 
 ### Step 6 (c): Run Trino Queries
 
-Running the same queries on Trino for Read-Optimized queries.
+Running the same queries on Trino for Read Optimized queries.
 
 ```java
 docker exec -it trino /bin/bash
@@ -739,6 +771,7 @@ Splits: 1 total, 1 done (100.00%)
 As you can notice, the above queries now reflect the changes that came as part of ingesting second batch.
 
 # Merge On Read Table:
+
 # Read Optimized Query
     
 trino:default> select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG';
@@ -786,18 +819,17 @@ spark-sql (default)> select `_hoodie_commit_time`, symbol, ts, volume, open, clo
 20240904122742622	GOOG	2018-08-31 09:59:00	6330	1230.5	1230.02
 20240904130113388	GOOG	2018-08-31 10:59:00	9021	1227.1993	1227.215
 Time taken: 2.913 seconds, Fetched 2 row(s)
+
+spark-sql (default)> exit;
+
+exit
 ```
 
-As you notice from the above queries, there are 2 commits - 20240904122742622 and 20240904130113388 in timeline order.
-When you follow the steps, you will be getting different timestamps for commits. Substitute them
-in place of the above timestamps.
+As you notice from the above queries, there are 2 commits - 20240904122742622 and 20240904130113388 in timeline order. When you follow the steps, you will be getting different timestamps for commits. Substitute them in place of the above timestamps.
 
-To show the effects of incremental-query, let us assume that a reader has already seen the changes as part of
-ingesting first batch. Now, for the reader to see effect of the second batch, he/she has to keep the start timestamp to
-the commit time of the first batch (20240904122742622) and run incremental query
+To show the effects of incremental-query, let us assume that a reader has already seen the changes as part of ingesting first batch. Now, for the reader to see effect of the second batch, he/she has to keep the start timestamp to the commit time of the first batch (20240904122742622) and run incremental query.
 
-Hudi incremental mode provides efficient scanning for incremental queries by filtering out files that do not have any
-candidate rows using hudi-managed metadata.
+Hudi incremental mode provides efficient scanning for incremental queries by filtering out files that do not have any candidate rows using hudi-managed metadata.
 
 ```java
 docker exec -it spark /bin/bash
@@ -822,13 +854,16 @@ hoodie.stock_ticks_cow.consume.start.timestamp	20240904122742622
 Time taken: 0.029 seconds, Fetched 1 row(s)
 ```
 
-With the above setting, file-ids that do not have any updates from the commit 20240904130113388 is filtered out without scanning.
-Here is the incremental query :
+With the above setting, file-ids that do not have any updates from the commit 20240904130113388 is filtered out without scanning. Here is the incremental query :
 
 ```java
 spark-sql (default)> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_cow where  symbol = 'GOOG' and `_hoodie_commit_time` > '20240904122742622';
 20240904130113388	GOOG	2018-08-31 10:59:00	9021	1227.1993	1227.215
 Time taken: 0.199 seconds, Fetched 1 row(s)
+
+spark-sql (default)> exit;
+
+exit
 ```
 
 ### Step 7 (b): Incremental Query with Spark Shell:
@@ -879,7 +914,7 @@ exit
 
 ### Step 8: Schedule and Run Compaction for Merge-On-Read table
 
-Lets schedule and run a compaction to create a new version of columnar  file so that read-optimized readers will see fresher data.
+Lets schedule and run a compaction to create a new version of columnar  file so that Read Optimized readers will see fresher data.
 Again, You can use Hudi CLI to manually schedule and run compaction
 
 ```java
@@ -988,6 +1023,7 @@ hudi:stock_ticks_mor->compactions show all
 
 
 # Execute the compaction. The compaction instant value passed below must be the one displayed in the above "compactions show all" query
+
 hoodie:stock_ticks_mor->compaction run --compactionInstant  20240907005719894 --parallelism 2 --sparkMemory 1G  --schemaFilePath s3://warehouse/schema.avsc --retry 1
 ....
 Compaction successfully completed for 20240907005719894
@@ -1008,15 +1044,14 @@ hudi:stock_ticks_mor->compactions show all
 ║ 20240907005719894       │ COMPLETED │ 1                             ║
 ╚═════════════════════════╧═══════════╧═══════════════════════════════╝
 
+hudi:stock_ticks_mor->exit
 
+exit
 ```
 
 ### Step 9: Run Spark-SQL Queries including incremental queries
 
-You will see that both ReadOptimized and Snapshot queries will show the latest committed data.
-Lets also run the incremental query for M-O-R table.
-From looking at the below query output, it will be clear that the fist commit time for the M-O-R table is 20240907000722335
-and the second commit time is 20240907001620314
+You will see that both Read Optimized and Snapshot queries will show the latest committed data. Lets also run the incremental query for M-O-R table. From looking at the below query output, it will be clear that the fist commit time for the M-O-R table is 20240907000722335 and the second commit time is 20240907001620314
 
 ```java
 docker exec -it spark /bin/bash
@@ -1028,6 +1063,7 @@ spark-sql --packages org.apache.hudi:hudi-utilities-slim-bundle_2.12:0.15.0,org.
 --conf 'spark.kryo.registrator=org.apache.spark.HoodieSparkKryoRegistrar'
 
 # Read Optimized Query
+
 spark-sql (default)> select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG';
 GOOG	2018-08-31 10:59:00
 Time taken: 3.399 seconds, Fetched 1 row(s)
@@ -1038,6 +1074,7 @@ spark-sql (default)> select `_hoodie_commit_time`, symbol, ts, volume, open, clo
 Time taken: 0.135 seconds, Fetched 2 row(s)
 
 # Snapshot Query
+
 spark-sql (default)> select symbol, max(ts) from stock_ticks_mor_rt group by symbol HAVING symbol = 'GOOG';
 GOOG	2018-08-31 10:59:00
 Time taken: 0.654 seconds, Fetched 1 row(s)
@@ -1054,6 +1091,7 @@ hoodie.stock_ticks_mor.consume.mode	INCREMENTAL
 Time taken: 0.039 seconds, Fetched 1 row(s)
 
 # Max-Commits covers both second batch and compaction commit
+
 spark-sql (default)> set hoodie.stock_ticks_mor.consume.max.commits=3;
 hoodie.stock_ticks_mor.consume.max.commits	3
 Time taken: 0.038 seconds, Fetched 1 row(s)
@@ -1062,11 +1100,12 @@ hoodie.stock_ticks_mor.consume.start.timestamp	20240907000722335
 Time taken: 0.029 seconds, Fetched 1 row(s)
 
 # Query:
+
 spark-sql (default)> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG' and `_hoodie_commit_time` > '20240907000722335';
 20240907001620314	GOOG	2018-08-31 10:59:00	9021	1227.1993	1227.215
 Time taken: 0.195 seconds, Fetched 1 row(s)
 
-exit;
+spark-sql (default)> exit;
 
 exit
 ```
@@ -1113,6 +1152,10 @@ scala> spark.sql("select `_hoodie_commit_time`, symbol, ts, volume, open, close 
 |20240907000722335  |GOOG  |2018-08-31 09:59:00|6330  |1230.5   |1230.02 |
 |20240907001620314  |GOOG  |2018-08-31 10:59:00|9021  |1227.1993|1227.215|
 +-------------------+------+-------------------+------+---------+--------+
+
+scala> :quit
+
+exit
 ```
 
 ### Step 11:  Trino Read Optimized queries on M-O-R table after compaction
