@@ -175,6 +175,15 @@ inorder to run Hive queries against those tables.
 ```java
 docker exec -it openjdk8 /bin/bash
 
+export HUDI_CLASSPATH=/opt/hudisync/*
+
+# If needed, we need to modify the existing run_sync_tool.sh with additional classpaths `/opt/hudisync/*:`.  Save and exit.
+vi /opt/hudi/hudi-sync/hudi-hive-sync/run_sync_tool.sh
+
+# The new java launch should look like
+echo "Running Command : java -cp ${HUDI_CLASSPATH}:${HADOOP_HIVE_JARS}:${HADOOP_CONF_DIR}:$HUDI_HIVE_UBER_JAR org.apache.hudi.hive.HiveSyncTool $@"
+java -cp ${HUDI_CLASSPATH}:$HUDI_HIVE_UBER_JAR:${HADOOP_HIVE_JARS}:${HADOOP_CONF_DIR} org.apache.hudi.hive.HiveSyncTool "$@"
+
 # This command takes in HiveServer URL and COW Hudi table location in S3 and sync the S3 state to Hive
 /opt/hudi/hudi-sync/hudi-hive-sync/run_sync_tool.sh  \
 --metastore-uris 'thrift://hive-metastore:9083' \
@@ -867,18 +876,21 @@ Lets schedule and run a compaction to create a new version of columnar  file so 
 Again, You can use Hudi CLI to manually schedule and run compaction
 
 ```java
-docker exec -it openjdk8 /bin/bash
+docker exec -it spark /bin/bash
 
 export HOODIE_ENV_fs_DOT_s3a_DOT_access_DOT_key=admin
 export HOODIE_ENV_fs_DOT_s3a_DOT_secret_DOT_key=password
 export HOODIE_ENV_fs_DOT_s3a_DOT_endpoint=http://minio:9000
 export HOODIE_ENV_fs_DOT_s3a_DOT_aws_DOT_credentials_DOT_provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider
-export CLIENT_JAR=/opt/hudicli/*
-export SPARK_BUNDLE_JAR=/opt/hudicli/hudi-spark-bundle_2.12-0.15.0.jar 
+export CLIENT_JAR=/opt/hudicli/hadoop-aws-2.10.2.jar:/opt/hudicli/aws-java-sdk-bundle-1.11.271.jar
+export SPARK_BUNDLE_JAR=/opt/hudicli/hudi-spark3.4-bundle_2.12-0.15.0.jar
 export CLI_BUNDLE_JAR=/opt/hudicli/hudi-cli-bundle_2.12-0.15.0.jar
-export HUDI_CONF_DIR=/opt/hudi/packaging/hudi-cli-bundle/conf/
+cp /opt/hudicli/hadoop-aws-2.10.2.jar /spark/jars
+cp /opt/hudicli/aws-java-sdk-bundle-1.11.271.jar /spark/jars
+mc alias set minio http://minio:9000 admin password
+mc cp /opt/demo/config/schema.avsc minio/warehouse
 
-root@openjdk8:/spark-3.4.3-bin-hadoop3/bin# /opt/hudi/packaging/hudi-cli-bundle/hudi-cli-with-bundle.sh
+cd /opt/hudicli && /opt/hudi/packaging/hudi-cli-bundle/hudi-cli-with-bundle.sh
 DIR is /opt/hudi/packaging/hudi-cli-bundle
 Inferring CLI_BUNDLE_JAR path assuming this script is under Hudi repo
 Inferring SPARK_BUNDLE_JAR path assuming this script is under Hudi repo
@@ -949,109 +961,105 @@ hudi:stock_ticks_mor->compactions show all
 # Schedule a compaction. This will use Spark Launcher to schedule compaction
 hoodie:stock_ticks_mor->compaction schedule --hoodieConfigs hoodie.compact.inline.max.delta.commits=1
 ....
-Compaction successfully completed for 20180924070031
+Attempted to schedule compaction for 20240907005719894
 
 # Now refresh and check again. You will see that there is a new compaction requested
 
-hoodie:stock_ticks_mor->refresh
-18/09/24 07:01:16 INFO table.HoodieTableMetaClient: Loading HoodieTableMetaClient from /user/hive/warehouse/stock_ticks_mor
-18/09/24 07:01:16 INFO table.HoodieTableConfig: Loading table properties from /user/hive/warehouse/stock_ticks_mor/.hoodie/hoodie.properties
-18/09/24 07:01:16 INFO table.HoodieTableMetaClient: Finished Loading Table of type MERGE_ON_READ(version=1) from /user/hive/warehouse/stock_ticks_mor
-Metadata for table stock_ticks_mor loaded
+hudi:stock_ticks_mor->refresh
+221115 [main] INFO  org.apache.hudi.common.table.HoodieTableMetaClient [] - Loading HoodieTableMetaClient from s3a://warehouse/stock_ticks_mor
+221121 [main] INFO  org.apache.hudi.common.table.HoodieTableConfig [] - Loading table properties from s3a://warehouse/stock_ticks_mor/.hoodie/hoodie.properties
+221125 [main] INFO  org.apache.hudi.common.table.HoodieTableMetaClient [] - Finished Loading Table of type MERGE_ON_READ(version=1, baseFileFormat=PARQUET) from s3a://warehouse/stock_ticks_mor
+Metadata for table stock_ticks_mor refreshed.
 
-hoodie:stock_ticks_mor->compactions show all
-18/09/24 06:34:12 INFO timeline.HoodieActiveTimeline: Loaded instants [[20180924041125__clean__COMPLETED], [20180924041125__deltacommit__COMPLETED], [20180924042735__clean__COMPLETED], [20180924042735__deltacommit__COMPLETED], [==>20180924063245__compaction__REQUESTED]]
-___________________________________________________________________
-| Compaction Instant Time| State    | Total FileIds to be Compacted|
-|==================================================================|
-| 20180924070031         | REQUESTED| 1                            |
+hudi:stock_ticks_mor->compactions show all
+75780 [main] INFO  org.apache.hudi.common.table.timeline.HoodieActiveTimeline [] - Loaded instants upto : Option{val=[==>20240907005719894__compaction__REQUESTED__20240907005724527]}
+╔═════════════════════════╤═══════════╤═══════════════════════════════╗
+║ Compaction Instant Time │ State     │ Total FileIds to be Compacted ║
+╠═════════════════════════╪═══════════╪═══════════════════════════════╣
+║ 20240907005719894       │ REQUESTED │ 1                             ║
+╚═════════════════════════╧═══════════╧═══════════════════════════════╝
+
 
 # Execute the compaction. The compaction instant value passed below must be the one displayed in the above "compactions show all" query
-hoodie:stock_ticks_mor->compaction run --compactionInstant  20180924070031 --parallelism 2 --sparkMemory 1G  --schemaFilePath /var/demo/config/schema.avsc --retry 1  
+hoodie:stock_ticks_mor->compaction run --compactionInstant  20240907005719894 --parallelism 2 --sparkMemory 1G  --schemaFilePath s3://warehouse/schema.avsc --retry 1
 ....
-Compaction successfully completed for 20180924070031
+Compaction successfully completed for 20240907005719894
 
 ## Now check if compaction is completed
 
-hoodie:stock_ticks_mor->refresh
-18/09/24 07:03:00 INFO table.HoodieTableMetaClient: Loading HoodieTableMetaClient from /user/hive/warehouse/stock_ticks_mor
-18/09/24 07:03:00 INFO table.HoodieTableConfig: Loading table properties from /user/hive/warehouse/stock_ticks_mor/.hoodie/hoodie.properties
-18/09/24 07:03:00 INFO table.HoodieTableMetaClient: Finished Loading Table of type MERGE_ON_READ(version=1) from /user/hive/warehouse/stock_ticks_mor
-Metadata for table stock_ticks_mor loaded
+hudi:stock_ticks_mor->refresh
+258485 [main] INFO  org.apache.hudi.common.table.HoodieTableMetaClient [] - Loading HoodieTableMetaClient from s3a://warehouse/stock_ticks_mor
+258493 [main] INFO  org.apache.hudi.common.table.HoodieTableConfig [] - Loading table properties from s3a://warehouse/stock_ticks_mor/.hoodie/hoodie.properties
+258497 [main] INFO  org.apache.hudi.common.table.HoodieTableMetaClient [] - Finished Loading Table of type MERGE_ON_READ(version=1, baseFileFormat=PARQUET) from s3a://warehouse/stock_ticks_mor
+Metadata for table stock_ticks_mor refreshed.
 
-hoodie:stock_ticks_mor->compactions show all
-18/09/24 07:03:15 INFO timeline.HoodieActiveTimeline: Loaded instants [[20180924064636__clean__COMPLETED], [20180924064636__deltacommit__COMPLETED], [20180924065057__clean__COMPLETED], [20180924065057__deltacommit__COMPLETED], [20180924070031__commit__COMPLETED]]
-___________________________________________________________________
-| Compaction Instant Time| State    | Total FileIds to be Compacted|
-|==================================================================|
-| 20180924070031         | COMPLETED| 1                            |
+hudi:stock_ticks_mor->compactions show all
+118413 [main] INFO  org.apache.hudi.common.table.timeline.HoodieActiveTimeline [] - Loaded instants upto : Option{val=[20240907005719894__commit__COMPLETED__20240907005816381]}
+╔═════════════════════════╤═══════════╤═══════════════════════════════╗
+║ Compaction Instant Time │ State     │ Total FileIds to be Compacted ║
+╠═════════════════════════╪═══════════╪═══════════════════════════════╣
+║ 20240907005719894       │ COMPLETED │ 1                             ║
+╚═════════════════════════╧═══════════╧═══════════════════════════════╝
+
 
 ```
 
-### Step 9: Run Hive Queries including incremental queries
+### Step 9: Run Spark-SQL Queries including incremental queries
 
 You will see that both ReadOptimized and Snapshot queries will show the latest committed data.
 Lets also run the incremental query for MOR table.
-From looking at the below query output, it will be clear that the fist commit time for the MOR table is 20180924064636
-and the second commit time is 20180924070031
+From looking at the below query output, it will be clear that the fist commit time for the MOR table is 20240907000722335
+and the second commit time is 20240907001620314
 
 ```java
-docker exec -it adhoc-2 /bin/bash
-beeline -u jdbc:hive2://hiveserver:10000 \
-  --hiveconf hive.input.format=org.apache.hadoop.hive.ql.io.HiveInputFormat \
-  --hiveconf hive.stats.autogather=false
+docker exec -it spark /bin/bash
+
+spark-sql --packages org.apache.hudi:hudi-utilities-slim-bundle_2.12:0.15.0,org.apache.hudi:hudi-spark3.4-bundle_2.12:0.15.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 \
+--conf 'spark.serializer=org.apache.spark.serializer.KryoSerializer' \
+--conf 'spark.sql.catalog.spark_catalog=org.apache.spark.sql.hudi.catalog.HoodieCatalog' \
+--conf 'spark.sql.extensions=org.apache.spark.sql.hudi.HoodieSparkSessionExtension' \
+--conf 'spark.kryo.registrator=org.apache.spark.HoodieSparkKryoRegistrar'
 
 # Read Optimized Query
-0: jdbc:hive2://hiveserver:10000> select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG';
-WARNING: Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
-+---------+----------------------+--+
-| symbol  |         _c1          |
-+---------+----------------------+--+
-| GOOG    | 2018-08-31 10:59:00  |
-+---------+----------------------+--+
-1 row selected (1.6 seconds)
+spark-sql (default)> select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG';
+GOOG	2018-08-31 10:59:00
+Time taken: 3.399 seconds, Fetched 1 row(s)
 
-0: jdbc:hive2://hiveserver:10000> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG';
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| _hoodie_commit_time  | symbol  |          ts          | volume  |    open    |   close   |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| 20180924064636       | GOOG    | 2018-08-31 09:59:00  | 6330    | 1230.5     | 1230.02   |
-| 20180924070031       | GOOG    | 2018-08-31 10:59:00  | 9021    | 1227.1993  | 1227.215  |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
+spark-sql (default)> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG';
+20240907000722335	GOOG	2018-08-31 09:59:00	6330	1230.5	1230.02
+20240907001620314	GOOG	2018-08-31 10:59:00	9021	1227.1993	1227.215
+Time taken: 0.135 seconds, Fetched 2 row(s)
 
 # Snapshot Query
-0: jdbc:hive2://hiveserver:10000> select symbol, max(ts) from stock_ticks_mor_rt group by symbol HAVING symbol = 'GOOG';
-WARNING: Hive-on-MR is deprecated in Hive 2 and may not be available in the future versions. Consider using a different execution engine (i.e. spark, tez) or using Hive 1.X releases.
-+---------+----------------------+--+
-| symbol  |         _c1          |
-+---------+----------------------+--+
-| GOOG    | 2018-08-31 10:59:00  |
-+---------+----------------------+--+
+spark-sql (default)> select symbol, max(ts) from stock_ticks_mor_rt group by symbol HAVING symbol = 'GOOG';
+GOOG	2018-08-31 10:59:00
+Time taken: 0.654 seconds, Fetched 1 row(s)
 
-0: jdbc:hive2://hiveserver:10000> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_rt where  symbol = 'GOOG';
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| _hoodie_commit_time  | symbol  |          ts          | volume  |    open    |   close   |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| 20180924064636       | GOOG    | 2018-08-31 09:59:00  | 6330    | 1230.5     | 1230.02   |
-| 20180924070031       | GOOG    | 2018-08-31 10:59:00  | 9021    | 1227.1993  | 1227.215  |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
+spark-sql (default)> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_rt where  symbol = 'GOOG';
+20240907000722335	GOOG	2018-08-31 09:59:00	6330	1230.5	1230.02
+20240907001620314	GOOG	2018-08-31 10:59:00	9021	1227.1993	1227.215
+Time taken: 0.13 seconds, Fetched 2 row(s)
 
 # Incremental Query:
 
-0: jdbc:hive2://hiveserver:10000> set hoodie.stock_ticks_mor.consume.mode=INCREMENTAL;
-No rows affected (0.008 seconds)
+spark-sql (default)> set hoodie.stock_ticks_mor.consume.mode=INCREMENTAL;
+hoodie.stock_ticks_mor.consume.mode	INCREMENTAL
+Time taken: 0.039 seconds, Fetched 1 row(s)
+
 # Max-Commits covers both second batch and compaction commit
-0: jdbc:hive2://hiveserver:10000> set hoodie.stock_ticks_mor.consume.max.commits=3;
-No rows affected (0.007 seconds)
-0: jdbc:hive2://hiveserver:10000> set hoodie.stock_ticks_mor.consume.start.timestamp=20180924064636;
-No rows affected (0.013 seconds)
+spark-sql (default)> set hoodie.stock_ticks_mor.consume.max.commits=3;
+hoodie.stock_ticks_mor.consume.max.commits	3
+Time taken: 0.038 seconds, Fetched 1 row(s)
+spark-sql (default)> set hoodie.stock_ticks_mor.consume.start.timestamp=20240907000722335;
+hoodie.stock_ticks_mor.consume.start.timestamp	20240907000722335
+Time taken: 0.029 seconds, Fetched 1 row(s)
+
 # Query:
-0: jdbc:hive2://hiveserver:10000> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG' and `_hoodie_commit_time` > '20180924064636';
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| _hoodie_commit_time  | symbol  |          ts          | volume  |    open    |   close   |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
-| 20180924070031       | GOOG    | 2018-08-31 10:59:00  | 9021    | 1227.1993  | 1227.215  |
-+----------------------+---------+----------------------+---------+------------+-----------+--+
+spark-sql (default)> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG' and `_hoodie_commit_time` > '20240907000722335';
+20240907001620314	GOOG	2018-08-31 10:59:00	9021	1227.1993	1227.215
+Time taken: 0.195 seconds, Fetched 1 row(s)
+
+exit;
 
 exit
 ```
@@ -1059,84 +1067,116 @@ exit
 ### Step 10: Read Optimized and Snapshot queries for MOR with Spark-SQL after compaction
 
 ```java
-docker exec -it adhoc-1 /bin/bash
-$SPARK_INSTALL/bin/spark-shell \
-  --jars $HUDI_SPARK_BUNDLE \
-  --driver-class-path $HADOOP_CONF_DIR \
-  --conf spark.sql.hive.convertMetastoreParquet=false \
-  --deploy-mode client \
-  --driver-memory 1G \
-  --master local[2] \
-  --executor-memory 3G \
-  --num-executors 1
+docker exec -it spark /bin/bash
+
+spark-shell --packages org.apache.hudi:hudi-utilities-slim-bundle_2.12:0.15.0,org.apache.hudi:hudi-spark3.4-bundle_2.12:0.15.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 \
+--conf 'spark.serializer=org.apache.spark.serializer.KryoSerializer' \
+--conf 'spark.sql.catalog.spark_catalog=org.apache.spark.sql.hudi.catalog.HoodieCatalog' \
+--conf 'spark.sql.extensions=org.apache.spark.sql.hudi.HoodieSparkSessionExtension' \
+--conf 'spark.kryo.registrator=org.apache.spark.HoodieSparkKryoRegistrar'
 
 # Read Optimized Query
 scala> spark.sql("select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG'").show(100, false)
-+---------+----------------------+
-| symbol  |        max(ts)       |
-+---------+----------------------+
-| GOOG    | 2018-08-31 10:59:00  |
-+---------+----------------------+
-1 row selected (1.6 seconds)
++------+-------------------+
+|symbol|max(ts)            |
++------+-------------------+
+|GOOG  |2018-08-31 10:59:00|
++------+-------------------+
 
 scala> spark.sql("select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG'").show(100, false)
-+----------------------+---------+----------------------+---------+------------+-----------+
-| _hoodie_commit_time  | symbol  |          ts          | volume  |    open    |   close   |
-+----------------------+---------+----------------------+---------+------------+-----------+
-| 20180924064636       | GOOG    | 2018-08-31 09:59:00  | 6330    | 1230.5     | 1230.02   |
-| 20180924070031       | GOOG    | 2018-08-31 10:59:00  | 9021    | 1227.1993  | 1227.215  |
-+----------------------+---------+----------------------+---------+------------+-----------+
++-------------------+------+-------------------+------+---------+--------+
+|_hoodie_commit_time|symbol|ts                 |volume|open     |close   |
++-------------------+------+-------------------+------+---------+--------+
+|20240907000722335  |GOOG  |2018-08-31 09:59:00|6330  |1230.5   |1230.02 |
+|20240907001620314  |GOOG  |2018-08-31 10:59:00|9021  |1227.1993|1227.215|
++-------------------+------+-------------------+------+---------+--------+
 
 # Snapshot Query
 scala> spark.sql("select symbol, max(ts) from stock_ticks_mor_rt group by symbol HAVING symbol = 'GOOG'").show(100, false)
-+---------+----------------------+
-| symbol  |     max(ts)          |
-+---------+----------------------+
-| GOOG    | 2018-08-31 10:59:00  |
-+---------+----------------------+
++------+-------------------+
+|symbol|max(ts)            |
++------+-------------------+
+|GOOG  |2018-08-31 10:59:00|
++------+-------------------+
 
 scala> spark.sql("select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_rt where  symbol = 'GOOG'").show(100, false)
-+----------------------+---------+----------------------+---------+------------+-----------+
-| _hoodie_commit_time  | symbol  |          ts          | volume  |    open    |   close   |
-+----------------------+---------+----------------------+---------+------------+-----------+
-| 20180924064636       | GOOG    | 2018-08-31 09:59:00  | 6330    | 1230.5     | 1230.02   |
-| 20180924070031       | GOOG    | 2018-08-31 10:59:00  | 9021    | 1227.1993  | 1227.215  |
-+----------------------+---------+----------------------+---------+------------+-----------+
++-------------------+------+-------------------+------+---------+--------+
+|_hoodie_commit_time|symbol|ts                 |volume|open     |close   |
++-------------------+------+-------------------+------+---------+--------+
+|20240907000722335  |GOOG  |2018-08-31 09:59:00|6330  |1230.5   |1230.02 |
+|20240907001620314  |GOOG  |2018-08-31 10:59:00|9021  |1227.1993|1227.215|
++-------------------+------+-------------------+------+---------+--------+
 ```
 
-### Step 11:  Presto Read Optimized queries on MOR table after compaction
-:::note
-This section of the demo is not supported for Mac AArch64 users at this time.
-:::
+### Step 11:  Trino Read Optimized queries on MOR table after compaction
 
 ```java
-docker exec -it presto-worker-1 presto --server presto-coordinator-1:8090
-presto> use hive.default;
+docker exec -it trino /bin/bash
+
+trino
+
+trino> show catalogs;
+ Catalog
+---------
+ delta
+ hive
+ hudi
+ iceberg
+ system
+(5 rows)
+
+Query 20240907_010945_00000_94du6, FINISHED, 1 node
+Splits: 11 total, 11 done (100.00%)
+0.54 [0 rows, 0B] [0 rows/s, 0B/s]
+
+trino> show schemas in hudi;
+       Schema
+--------------------
+ default
+ information_schema
+(2 rows)
+
+Query 20240907_011158_00000_dic4v, FINISHED, 1 node
+Splits: 11 total, 11 done (100.00%)
+0.64 [2 rows, 35B] [3 rows/s, 55B/s]
+
+trino> use hudi.default;
 USE
 
+trino:default> show tables;
+       Table
+--------------------
+ stock_ticks_cow
+ stock_ticks_mor
+ stock_ticks_mor_ro
+ stock_ticks_mor_rt
+(4 rows)
+
+Query 20240907_011235_00004_dic4v, FINISHED, 1 node
+Splits: 11 total, 11 done (100.00%)
+0.19 [4 rows, 134B] [21 rows/s, 709B/s]
+
 # Read Optimized Query
-resto:default> select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG';
-  symbol |        _col1
+trino:default> select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG';
+ symbol |        _col1
 --------+---------------------
  GOOG   | 2018-08-31 10:59:00
 (1 row)
 
-Query 20190822_182319_00011_segyw, FINISHED, 1 node
-Splits: 49 total, 49 done (100.00%)
-0:01 [197 rows, 613B] [133 rows/s, 414B/s]
+Query 20240907_011248_00005_dic4v, FINISHED, 1 node
+Splits: 17 total, 17 done (100.00%)
+1.18 [197 rows, 474KB] [166 rows/s, 400KB/s]
 
-presto:default> select "_hoodie_commit_time", symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG';
+trino:default> select "_hoodie_commit_time", symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG';
  _hoodie_commit_time | symbol |         ts          | volume |   open    |  close
 ---------------------+--------+---------------------+--------+-----------+----------
- 20190822180250      | GOOG   | 2018-08-31 09:59:00 |   6330 |    1230.5 |  1230.02
- 20190822181944      | GOOG   | 2018-08-31 10:59:00 |   9021 | 1227.1993 | 1227.215
+ 20240907000722335   | GOOG   | 2018-08-31 09:59:00 |   6330 |    1230.5 |  1230.02
+ 20240907001620314   | GOOG   | 2018-08-31 10:59:00 |   9021 | 1227.1993 | 1227.215
 (2 rows)
 
-Query 20190822_182333_00012_segyw, FINISHED, 1 node
-Splits: 17 total, 17 done (100.00%)
-0:02 [197 rows, 613B] [98 rows/s, 307B/s]
-
-presto:default>
+Query 20240907_011306_00006_dic4v, FINISHED, 1 node
+Splits: 1 total, 1 done (100.00%)
+0.19 [197 rows, 481KB] [1.01K rows/s, 2.42MB/s]
 ```
 
 
