@@ -1255,7 +1255,34 @@ Apache XTable is an open-source project that aims to simplify data lake operatio
 
 ### Apache SuperSet
 
-Apache Superset is a powerful open-source data exploration and visualization platform designed to help organizations of all sizes uncover insights from their data. It offers a user-friendly interface that allows users to create interactive dashboards, charts, and reports without extensive technical knowledge.
+Apache Superset is a powerful open-source data exploration and visualization platform designed to help organizations of all sizes uncover insights from their data. It offers a user-friendly interface that allows users to create interactive dashboards, charts, and reports without extensive technical knowledge.  To get Apache Superset working, just connect Superset to the trino container in this demo environment. 
+
+### StarRocks
+
+Experience how you connect different SQL engines to the data lakehouse created by Apache Hudi in this demo. StarRocks is a powerful and efficient open-source OLAP (Online Analytical Processing) database that is designed to handle large-scale data analytics and real-time queries. It is a massively parallel processing (MPP) database, meaning it can distribute data across multiple nodes and perform calculations simultaneously, making it ideal for handling complex analytics tasks.  Deploy an instance of StarRocks and you can connect to the data in this demo using
+
+Replace hive.metastore.uris and aws.s3.endpoint with ngrok URI
+```
+docker logs ngrok |grep "started tunnel"
+```
+
+Starrocks' catalog create sql
+```
+CREATE EXTERNAL CATALOG hudi_catalog_hms
+PROPERTIES
+(
+    "type" = "hudi",
+    "hive.metastore.type" = "hive",
+    "hive.metastore.uris" = "thrift://hive-metastore:9083",
+    "aws.s3.use_instance_profile" = "false",
+    "aws.s3.access_key" = "admin",
+    "aws.s3.secret_key" = "password",
+    "aws.s3.region" = "us-east-1",
+    "aws.s3.enable_ssl" = "false",
+    "aws.s3.enable_path_style_access" = "true",
+    "aws.s3.endpoint" = "http://minio:9000"
+);
+```
 
 ### Onehouse Cloud
 
