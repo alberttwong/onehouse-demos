@@ -1,9 +1,8 @@
 ## A Demo using Docker containers
 
-Let's use a real world example to see how Hudi works end to end. For this purpose, a self contained
-data infrastructure is brought up in a local Docker cluster within your computer. 
+Let's use a real world example to see how Hudi works end to end. For this purpose, a self contained data infrastructure is brought up in a local Docker cluster within your workstation. 
 
-The steps have been tested on a Mac laptop
+The steps have been tested on a Mac ARM laptop.
 
 ### Prerequisites
 
@@ -15,11 +14,21 @@ The steps have been tested on a Mac laptop
   * ngrok
     * Sign up for an account with ngrok, it will be used so that you can access your kafka cluster on the internet.  You will need an ngrok authtoken in the following steps.
   * Internet connectivity
-    * Maven repositories like https://mvnrepository.com/
+    * Maven repositories like https://mvnrepository.com
     * Docker Hub
     * Others
     
 Also, this has not been tested on some environments like Docker on Windows.
+
+## Talking about Apache Hudi demo
+Apache Hudi is compatible with JDK 8 and can be compiled and run on this version. While you might not need to compile the code yourself, we've provided the source code in the /opt/hudi directory. You can use `git pull` to fetch the latest updates or `git checkout release-0.15.0` to switch to a specific version.
+
+For this demonstration, we'll be using Hudi 0.15 and Spark 3.4. You can easily adapt these instructions to other versions by modifying the libraries you download.
+
+To ensure clarity and understanding, we'll provide a detailed explanation of each step involved in the process.
+
+## Reset the enviroment
+To improve performance, we cache the JARs needed for the demo in the spark/jars and spark/cache directories after the initial download.  When you want to switch to a different Spark or Hudi version or have class conflicts, please clear them out by typing `rm -Rf spark/jars/*.jar` and `rm -Rf spark/cache/*`
 
 
 ## Setting up Docker Cluster
@@ -27,6 +36,8 @@ Also, this has not been tested on some environments like Docker on Windows.
 ### Bringing up Demo Cluster
 
 This should pull the Docker images from Docker hub and setup the Docker cluster.
+
+Sign up for an free NGROK token at https://ngrok.com/.  NGROK will be used so that you can access your kafka cluster on the internet and on your local workstation even though it's behind the docker network.
 
 ```
 export NGROK_AUTHTOKEN=XXXXXX
@@ -39,33 +50,40 @@ At this point, the Docker cluster will be up and running. The demo cluster bring
    * Spark Master and Worker
    * Hive Services (Metastore along with PostgresDB)
    * Apache Kafka with ngrok enabled
-   * Containers for Presto setup (Presto coordinator and worker)
    * Containers for Trino setup (Trino coordinator and worker)
+   * ngrok proxy
 
 ```output
 albert@Alberts-MBP ~ % docker ps
 CONTAINER ID   IMAGE                                    COMMAND                   CREATED          STATUS                            PORTS                                                                    NAMES
-52a488224df2   quay.io/debezium/kafka:2.7.0.Final       "/bin/sh -c 'echo \"W…"   10 seconds ago   Up 9 seconds                      9092/tcp, 0.0.0.0:29092->29092/tcp                                       trino-prestodb-spark-minio-kafka-1
+52a488224df2   quay.io/debezium/kafka:2.7.0.Final       "/bin/sh -c 'echo \"W…"   10 seconds ago   Up 9 seconds                      9092/tcp, 0.0.0.0:29092->29092/tcp                                       kafka
 cc4e39344d20   starburstdata/hive:3.1.3-e.10            "/bin/sh -c \"/opt/bi…"   10 seconds ago   Up 9 seconds (health: starting)   0.0.0.0:9083->9083/tcp                                                   trino-prestodb-spark-minio-hive-metastore-1
 2226b7caf902   minio/mc                                 "/bin/sh -c ' until …"    10 seconds ago   Up 9 seconds                                                                                               trino-prestodb-spark-minio-mc-1
 d52de8d6044d   minio/minio                              "/usr/bin/docker-ent…"    10 seconds ago   Up 9 seconds                      0.0.0.0:9000-9001->9000-9001/tcp                                         trino-prestodb-spark-minio-minio-1
 f3d2c4c32ab8   quay.io/debezium/zookeeper:2.7.0.Final   "/docker-entrypoint.…"    10 seconds ago   Up 9 seconds                      0.0.0.0:2181->2181/tcp, 0.0.0.0:2888->2888/tcp, 0.0.0.0:3888->3888/tcp   trino-prestodb-spark-minio-zookeeper-1
 d0e5b1a7387e   trinodb/trino:418                        "/usr/lib/trino/bin/…"    10 seconds ago   Up 9 seconds (health: starting)   0.0.0.0:8080->8080/tcp                                                   trino
-c8d99b87cc07   almondsh/almond:latest                   "tini -g -- start-no…"    10 seconds ago   Up 9 seconds (healthy)            0.0.0.0:8888->8888/tcp                                                   jupyter
-b695f12f9d68   ngrok/ngrok:latest                       "/nix/store/n98vsmwd…"    10 seconds ago   Up 9 seconds                      0.0.0.0:4040->4040/tcp                                                   trino-prestodb-spark-minio-ngrok-1
+b695f12f9d68   ngrok/ngrok:latest                       "/nix/store/n98vsmwd…"    10 seconds ago   Up 9 seconds                      0.0.0.0:4040->4040/tcp                                                   ngrok-1
 0062dc427617   postgres:11                              "docker-entrypoint.s…"    10 seconds ago   Up 9 seconds                      5432/tcp                                                                 trino-prestodb-spark-minio-metastore_db-1
-5bd39a488508   prestodb/presto:0.283                    "/opt/entrypoint.sh"      10 seconds ago   Up 9 seconds                      0.0.0.0:8082->8082/tcp                                                   presto
 ```
+
+### Getting the ngrok address
+
+```
+docker logs trino-prestodb-spark-minio-ngrok-1 |grep "started tunnel"
+t=2024-09-07T00:05:31+0000 lvl=info msg="started tunnel" obj=tunnels name=kafka addr=//kafka:9092 url=tcp://2.tcp.us-cal-1.ngrok.io:19757
+```
+
+Your kafka URI in this situation is `tcp://2.tcp.us-cal-1.ngrok.io:19757`.  It will change every time you startup this demo environment.
+
+## conduktor or any other kafka toolling for kafka browsing
+
+You can use any kafka browser.  I personally tested conduktor.  You can just follow the conduktor quickstart at https://conduktor.io/get-started and put in the kafka ngrok URI with no username and password and see the topics and messages come in LIVE. We also have instructions below to see the messages on the CLI.
 
 ## Demo
 
 Stock Tracker data will be used to showcase different Hudi query types and the effects of Compaction.
 
-Take a look at the directory `demo/data`. There are 2 batches of stock data - each at 1 minute granularity.
-The first batch contains stocker tracker data for some stock symbols during the first hour of trading window
-(9:30 a.m to 10:30 a.m). The second batch contains tracker data for next 30 mins (10:30 - 11 a.m). Hudi will
-be used to ingest these batches to a table which will contain the latest stock tracker data at hour level granularity.
-The batches are windowed intentionally so that the second batch contains updates to some of the rows in the first batch.
+Take a look at the directory `demo/data`. There are 2 batches of stock data - each at 1 minute granularity. The first batch contains stocker tracker data for some stock symbols during the first hour of trading window (9:30 a.m to 10:30 a.m). The second batch contains tracker data for next 30 mins (10:30 - 11 a.m). Hudi will be used to ingest these batches to a table which will contain the latest stock tracker data at hour level granularity. The batches are windowed intentionally so that the second batch contains updates to some of the rows in the first batch.
 
 ### Step 1 : Publish the first batch to Kafka
 
@@ -119,10 +137,9 @@ kafkacat -b kafka -L -J | jq .
 
 ### Step 2: Incrementally ingest data from Kafka topic
 
-Hudi comes with a tool named Hudi Streamer. This tool can connect to variety of data sources (including Kafka) to
-pull changes and apply to Hudi table using upsert/insert primitives. Here, we will use the tool to download
-json data from kafka topic and ingest to both COW and MOR tables we initialized in the previous step. This tool
-automatically initializes the tables in the file-system if they do not exist yet.
+Hudi offers a powerful tool called Hudi Streamer, designed to ingest data from various sources, including Kafka. It uses upsert and insert operations to efficiently apply incoming changes to Hudi tables. Compared to the Hudi Kafka Sink, Hudi Streamer is the recommended choice for data ingestion.
+
+In this demonstration, we'll employ Hudi Streamer to retrieve JSON data from a Kafka topic and load it into both COW and M-O-R tables that we created earlier. If these tables don't already exist in the file system, Hudi Streamer will automatically initialize them.
 
 ```java
 docker exec -it spark /bin/bash
@@ -157,27 +174,23 @@ spark-submit \
 exit
 ```
 
-You can use Min.IO browser to look at the tables
-`http://localhost:9001/browser/warehouse/stock_ticks_cow%2F` with username/password of admin/password.
+You can view the contents of the "stock_ticks_cow" table using the Min.IO browser at http://localhost:9001/browser/warehouse/stock_ticks_cow%2F. Login credentials are admin/password.
 
-You can explore the new partition folder created in the table along with a "commit" / "deltacommit"
-file under .hoodie which signals a successful commit.
+You can explore the new partition folder created in the table along with a "commit" / "deltacommit" file under .hoodie which signals a successful commit.
 
-There will be a similar setup when you browse the MOR table
-`http://localhost:9001/browser/warehouse/stock_ticks_mor%2F` with username/password of admin/password.
+There will be a similar setup when you browse the M-O-R table http://localhost:9001/browser/warehouse/stock_ticks_mor%2F. Login credentials are admin/password.
 
 
 ### Step 3: Sync with Hive
 
-At this step, the tables are available in S3. We need to sync with Hive to create new Hive tables and add partitions
-inorder to run Hive queries against those tables.
+At this step, the tables are available in S3. We need to sync with Hive to create new Hive tables and add partitions inorder to run queries against those tables.
 
 ```java
 docker exec -it openjdk8 /bin/bash
 
 export HUDI_CLASSPATH=/opt/hudisync/*
 
-# If needed, we need to modify the existing run_sync_tool.sh with additional classpaths `/opt/hudisync/*:`.  Save and exit.
+# If needed, we need to modify the existing run_sync_tool.sh with additional classpaths HUDI_CLASSPATH.  Save and exit.
 vi /opt/hudi/hudi-sync/hudi-hive-sync/run_sync_tool.sh
 
 # The new java launch should look like
@@ -197,7 +210,7 @@ java -cp ${HUDI_CLASSPATH}:$HUDI_HIVE_UBER_JAR:${HADOOP_HIVE_JARS}:${HADOOP_CONF
 2024-09-04 12:33:27,101 INFO  [main] hive.HiveSyncTool (HiveSyncTool.java:syncHoodieTable(297)) - Sync complete for stock_ticks_cow
 .....
 
-# Now run hive-sync for the second data-set in S3 using Merge-On-Read (MOR table type)
+# Now run hive-sync for the second data-set in S3 using Merge-On-Read (M-O-R table type)
 /opt/hudi/hudi-sync/hudi-hive-sync/run_sync_tool.sh  \
 --metastore-uris 'thrift://hive-metastore:9083' \
 --partitioned-by dt \
@@ -214,16 +227,13 @@ exit
 ```
 After executing the above command, you will notice
 
-1. A hive table named `stock_ticks_cow` created which supports Snapshot and Incremental queries on Copy On Write table.
-2. Two new tables `stock_ticks_mor_rt` and `stock_ticks_mor_ro` created for the Merge On Read table. The former
-supports Snapshot and Incremental queries (providing near-real time data) while the later supports ReadOptimized queries.
+1. A table named `stock_ticks_cow` created which supports Snapshot and Incremental queries on Copy On Write table.
+2. Two new tables `stock_ticks_mor_rt` and `stock_ticks_mor_ro` created for the Merge On Read table. The former supports Snapshot and Incremental queries (providing near-real time data) while the later supports Read Optimized queries.
 
 
 ### Step 4 (a): Run Queries with Spark-SQL
 
-Run a \ query to find the latest timestamp ingested for stock symbol 'GOOG'. You will notice that both snapshot 
-(for both COW and MOR _rt table) and read-optimized queries (for MOR _ro table) give the same value "10:29 a.m" as Hudi create a
-parquet file for the first batch of data.
+Run a query to find the latest timestamp ingested for stock symbol 'GOOG'. You will notice that both snapshot (for both COW and MOR_rt table) and read-optimized queries (for MOR_ro table) give the same value "10:29 a.m" as Hudi create a parquet file for the first batch of data.
 
 ```java
 docker exec -it spark /bin/bash
@@ -266,24 +276,21 @@ Time taken: 0.149 seconds, Fetched 2 row(s)
 # Merge-On-Read Queries:
 ==========================
 
-Lets run similar queries against M-O-R table. Lets look at both 
-ReadOptimized and Snapshot(realtime data) queries supported by M-O-R table
+Lets run similar queries against M-O-R table. Lets look at both Read Optimized and Snapshot (realtime data) queries supported by M-O-R table
 
-# Run ReadOptimized Query. Notice that the latest timestamp is 10:29
+# Run Read Optimized Query. Notice that the latest timestamp is 10:29
 spark-sql (default)> select symbol, max(ts) from stock_ticks_mor_ro group by symbol HAVING symbol = 'GOOG';
 GOOG	2018-08-31 10:29:00
 Time taken: 0.484 seconds, Fetched 1 row(s)
 
 
 # Run Snapshot Query. Notice that the latest timestamp is again 10:29
-
 spark-sql (default)> select symbol, max(ts) from stock_ticks_mor_rt group by symbol HAVING symbol = 'GOOG';
 GOOG	2018-08-31 10:29:00
 Time taken: 0.558 seconds, Fetched 1 row(s)
 
 
 # Run Read Optimized and Snapshot project queries
-
 spark-sql (default)> select `_hoodie_commit_time`, symbol, ts, volume, open, close  from stock_ticks_mor_ro where  symbol = 'GOOG';
 20240904123001395	GOOG	2018-08-31 09:59:00	6330	1230.5	1230.02
 20240904123001395	GOOG	2018-08-31 10:29:00	3391	1230.1899	1230.085
@@ -484,7 +491,7 @@ Splits: 1 total, 1 done (100.00%)
 # Merge-On-Read Queries:
 ==========================
 
-Lets run similar queries against MOR table.
+Lets run similar queries against M-O-R table.
 
 # Run ReadOptimized Query. Notice that the latest timestamp is 10:29
     
@@ -1007,8 +1014,8 @@ hudi:stock_ticks_mor->compactions show all
 ### Step 9: Run Spark-SQL Queries including incremental queries
 
 You will see that both ReadOptimized and Snapshot queries will show the latest committed data.
-Lets also run the incremental query for MOR table.
-From looking at the below query output, it will be clear that the fist commit time for the MOR table is 20240907000722335
+Lets also run the incremental query for M-O-R table.
+From looking at the below query output, it will be clear that the fist commit time for the M-O-R table is 20240907000722335
 and the second commit time is 20240907001620314
 
 ```java
@@ -1064,7 +1071,7 @@ exit;
 exit
 ```
 
-### Step 10: Read Optimized and Snapshot queries for MOR with Spark-SQL after compaction
+### Step 10: Read Optimized and Snapshot queries for M-O-R with Spark-SQL after compaction
 
 ```java
 docker exec -it spark /bin/bash
@@ -1108,7 +1115,7 @@ scala> spark.sql("select `_hoodie_commit_time`, symbol, ts, volume, open, close 
 +-------------------+------+-------------------+------+---------+--------+
 ```
 
-### Step 11:  Trino Read Optimized queries on MOR table after compaction
+### Step 11:  Trino Read Optimized queries on M-O-R table after compaction
 
 ```java
 docker exec -it trino /bin/bash
