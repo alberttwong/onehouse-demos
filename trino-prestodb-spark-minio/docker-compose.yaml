@@ -150,7 +150,7 @@ services:
   spark:
     container_name: spark 
     hostname: spark
-    image: 'atwong/hudi-openjdk-11-spark-3.4:0.1.1'
+    image: 'atwong/hudi-openjdk-8-spark-3.4:0.1.1'
     depends_on:
       hive-metastore:
         condition: service_healthy
