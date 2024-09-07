@@ -19,6 +19,7 @@ services:
   ngrok:
     image: ngrok/ngrok:latest
     restart: unless-stopped
+    container_name: ngrok
     command:
       - "start"
       - "--all"
@@ -38,6 +39,7 @@ services:
      - 2888:2888
      - 3888:3888
   kafka:
+    container_name: kafka
     image: quay.io/debezium/kafka:2.7.0.Final
     ports:
      - 29092:29092
