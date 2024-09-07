@@ -4,3 +4,12 @@ tunnels:
   kafka:
     addr: "kafka:9092"
     proto: tcp
+  minio:
+    addr: "minio:9000"
+    proto: tcp
+  hms:
+    addr: "hive-metastore:9083"
+    proto: tcp
+#  trino:
+#    address: "trino:8080"
+#    proto: tcp
