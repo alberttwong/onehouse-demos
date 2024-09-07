@@ -11,7 +11,7 @@
 * [Onehouse] [https://github.com/alberttwong/OnehouseCustomTransformations](https://github.com/alberttwong/OnehouseCustomTransformations)
 
 ## Query Demo
-* trino-prestodb-spark-minio
+* hudi-spark-minio-trino
   * [Community] Use Spark to write Hudi, have Apache xTable convert the format to Iceberg and Delta Lake, read the data using Trino
   * [Community] Use Spark to write Iceberg, have Apache xTable convert the format to Hudi and Delta Lake, read the data using Trino
   * [Community] Use Spark to write Delta Lake, have Apache xTable convert the format to Iceberg and Hudi, read the data using Trino
