@@ -71,7 +71,7 @@ b695f12f9d68   ngrok/ngrok:latest                       "/nix/store/n98vsmwd…"
 ### Getting the ngrok address
 
 ```
-docker logs trino-prestodb-spark-minio-ngrok-1 |grep "started tunnel"
+docker logs ngrok |grep "started tunnel"
 t=2024-09-07T00:05:31+0000 lvl=info msg="started tunnel" obj=tunnels name=kafka addr=//kafka:9092 url=tcp://2.tcp.us-cal-1.ngrok.io:19757
 ```
 
