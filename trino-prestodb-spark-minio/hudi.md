@@ -1253,6 +1253,10 @@ Onehouse LakeView is a free observability service designed specifically for data
 
 Apache XTable is an open-source project that aims to simplify data lake operations by providing a common model for table representation. It acts as a cross-table converter, facilitating interoperability between different lakehouse table formats like Apache Hudi, Apache Iceberg, and Delta Lake. You can easily add Apache xTable to this demo.   Just follow the steps in the Apache xTable Quickstart using this docker compose.
 
+### Apache SuperSet
+
+Apache Superset is a powerful open-source data exploration and visualization platform designed to help organizations of all sizes uncover insights from their data. It offers a user-friendly interface that allows users to create interactive dashboards, charts, and reports without extensive technical knowledge.
+
 ### Onehouse Cloud
 
 Onehouse Cloud is a platform that simplifies the process of building and managing data lakes. It offers a managed lakehouse solution, which combines the best features of data warehouses and data lakes. This means you can enjoy the scalability and flexibility of a data lake while also benefiting from the structured and query-optimized capabilities of a data warehouse. Connect this environment to Onehouse Cloud by configuring the Onehouse Cloud Kafka Source to use the ngrok kafka URL.
