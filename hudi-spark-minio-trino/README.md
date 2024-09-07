@@ -7,7 +7,7 @@ These steps have been verified on a Mac ARM laptop, ensuring compatibility and e
 ### Prerequisites
 
   * Docker Setup
-    * Virtual disk limit: 200 GB
+    * Virtual disk limit: 100 GB
     * Memory limit: 8 GB
     * File Sharing: VirtioFS
     * [If using Mac ARM], Use Rosetta for x86_64/amd64 emulation on Apple Silicon: CHECKED
