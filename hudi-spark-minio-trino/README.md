@@ -210,7 +210,7 @@ There will be a similar setup when you browse the M-O-R table http://localhost:9
 
 ### Step 3: Sync with Hive
 
-At this step, the tables are available in S3. We need to sync with Hive to create new Hive tables and add partitions inorder to run queries against those tables.
+At this step, the tables are available in S3. We need to sync with Hive to create new Hive tables and add partitions inorder to run queries against those tables.  We will use a different container because Hudi Hive Sync requires a full installation of Spark, Hadoop and Hive inorder for the utility to run.
 
 ```java
 docker exec -it openjdk8 /bin/bash
