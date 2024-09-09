@@ -22,7 +22,7 @@ Also, this has not been tested on some environments like Docker on Windows.
 
 ## Talking about Apache Hudi demo
 
-Apache Hudi is compatible with JDK 8 and can be compiled and run on this version. While you might not need to compile the code yourself, we've provided the source code in the /opt/hudi directory. You can use `git pull` to fetch the latest updates or `git checkout release-0.15.0` to switch to a specific version.
+Apache Hudi is compatible with JDK 8 and can be compiled and run on this version. While you might not need to compile the code yourself, we've provided the source code in the /opt/hudi directory. You can use `git pull` to fetch the latest updates or `git checkout release-0.15.0` to switch to a specific version like Hudi 0.15.
 
 For this demonstration, we'll be using Hudi 0.15 and Spark 3.4. You can easily adapt these instructions to other versions by modifying the libraries you download.
 
