@@ -1273,6 +1273,22 @@ Apache XTable is an open-source project that aims to simplify data lake operatio
 
 Apache Superset is a powerful open-source data exploration and visualization platform designed to help organizations of all sizes uncover insights from their data. It offers a user-friendly interface that allows users to create interactive dashboards, charts, and reports without extensive technical knowledge.  To get Apache Superset working, just connect Superset to the trino container in this demo environment.  Expore the trino endpoint by modifying the ngrok.yml to enable ngrok on Trino. 
 
+Here is an example of the modifications in ngrok.yml to expose trino to the internet and workstation.
+```
+version: 2
+log: stdout
+tunnels:
+  trino:
+    address: "trino:8080"
+    proto: tcp
+```
+
+Put in the trino ngrok URI into the database connection wizard in Apache Superset
+```
+albert@albertonehouse hudi-spark-minio-trino % docker logs ngrok |grep "started tunnel"
+t=2024-09-09T15:28:51+0000 lvl=info msg="started tunnel" obj=tunnels name=trino addr=//trino:8080 url=tcp://0.tcp.us-cal-1.ngrok.io:11058
+```
+
 ### StarRocks
 
 Experience how you connect different SQL engines to the data lakehouse created by Apache Hudi in this demo. StarRocks is a powerful and efficient open-source OLAP (Online Analytical Processing) database that is designed to handle large-scale data analytics and real-time queries. It is a massively parallel processing (MPP) database, meaning it can distribute data across multiple nodes and perform calculations simultaneously, making it ideal for handling complex analytics tasks.  Deploy an instance of StarRocks and you can connect to the data in this demo using
