@@ -1271,7 +1271,7 @@ Apache XTable is an open-source project that aims to simplify data lake operatio
 
 ### Apache SuperSet
 
-Apache Superset is a powerful open-source data exploration and visualization platform designed to help organizations of all sizes uncover insights from their data. It offers a user-friendly interface that allows users to create interactive dashboards, charts, and reports without extensive technical knowledge.  To get Apache Superset working, just connect Superset to the trino container in this demo environment. 
+Apache Superset is a powerful open-source data exploration and visualization platform designed to help organizations of all sizes uncover insights from their data. It offers a user-friendly interface that allows users to create interactive dashboards, charts, and reports without extensive technical knowledge.  To get Apache Superset working, just connect Superset to the trino container in this demo environment.  Expore the trino endpoint by modifying the ngrok.yml to enable ngrok on Trino. 
 
 ### StarRocks
 
