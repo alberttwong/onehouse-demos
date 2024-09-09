@@ -215,6 +215,13 @@ At this step, the tables are available in S3. We need to sync with Hive to creat
 ```java
 docker exec -it openjdk8 /bin/bash
 
+# Let's look at what java libraries are needed to run the sync tool.
+
+root@openjdk8:/spark-3.4.3-bin-hadoop3/bin# ls /opt/hudisync/
+aws-java-sdk-bundle-1.11.271.jar  hadoop-aws-2.10.2.jar  libthrift-0.13.0.jar
+
+# Add the sync libraries to classpath
+
 export HUDI_CLASSPATH=/opt/hudisync/*
 
 # If needed, we need to modify the existing run_sync_tool.sh with additional classpaths HUDI_CLASSPATH.  Save and exit.
@@ -456,7 +463,7 @@ Here are the similar queries with Trino.
 ```java
 docker exec -it trino /bin/bash
 
-trino
+trino@trino:/$ trino
 
 trino> show catalogs;
  Catalog
@@ -740,7 +747,7 @@ Running the same queries on Trino for Read Optimized queries.
 ```java
 docker exec -it trino /bin/bash
 
-trino
+trino@trino:/$ trino
 
 trino> use hudi.default;
 USE
@@ -920,6 +927,8 @@ Again, You can use Hudi CLI to manually schedule and run compaction
 ```java
 docker exec -it spark /bin/bash
 
+# Let's execute some environment variables and move java libraries to the right locations
+
 export HOODIE_ENV_fs_DOT_s3a_DOT_access_DOT_key=admin
 export HOODIE_ENV_fs_DOT_s3a_DOT_secret_DOT_key=password
 export HOODIE_ENV_fs_DOT_s3a_DOT_endpoint=http://minio:9000
@@ -932,7 +941,14 @@ cp /opt/hudicli/aws-java-sdk-bundle-1.11.271.jar /spark/jars
 mc alias set minio http://minio:9000 admin password
 mc cp /opt/demo/config/schema.avsc minio/warehouse
 
-cd /opt/hudicli && /opt/hudi/packaging/hudi-cli-bundle/hudi-cli-with-bundle.sh
+# Let's check the libraries needed to run Hudi ci
+
+root@spark:/spark-3.4.3-bin-hadoop3/bin# ls /opt/hudicli/
+aws-java-sdk-bundle-1.11.271.jar  hadoop-aws-2.10.2.jar  hudi-cli-bundle_2.12-0.15.0.jar  hudi-spark3.4-bundle_2.12-0.15.0.jar
+
+# Run the Hudi cli
+
+root@spark:/spark-3.4.3-bin-hadoop3/bin# cd /opt/hudicli && /opt/hudi/packaging/hudi-cli-bundle/hudi-cli-with-bundle.sh
 DIR is /opt/hudicli
 Inferring CLI_BUNDLE_JAR path assuming this script is under Hudi repo
 Inferring SPARK_BUNDLE_JAR path assuming this script is under Hudi repo
@@ -1163,7 +1179,7 @@ exit
 ```java
 docker exec -it trino /bin/bash
 
-trino
+trino@trino:/$ trino
 
 trino> show catalogs;
  Catalog
