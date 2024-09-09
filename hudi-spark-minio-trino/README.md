@@ -24,7 +24,7 @@ Also, this has not been tested on some environments like Docker on Windows.
 
 Apache Hudi is compatible with JDK 8 and can be compiled and run on this version. While you might not need to compile the code yourself, we've provided the source code in the /opt/hudi directory. You can use `git pull` to fetch the latest updates or `git checkout release-0.15.0` to switch to a specific version like Hudi 0.15.
 
-For this demonstration, we'll be using Hudi 0.15 and Spark 3.4. You can easily adapt these instructions to other versions by modifying the libraries you download.
+For this demonstration, we'll be using Hudi 0.15 and Spark 3.4. You can easily adapt these instructions to other versions by modifying the libraries you download. In addition, we will be deploying Apache Hudi in a S3-based data lakehouse environment and using Spark and SQL query engine tools like Trino to query the data in the data lakehouse.
 
 To ensure clarity and understanding, we'll provide a detailed explanation of each step involved in the process.
 
@@ -67,6 +67,10 @@ d0e5b1a7387e   trinodb/trino:418                        "/usr/lib/trino/bin/…"
 b695f12f9d68   ngrok/ngrok:latest                       "/nix/store/n98vsmwd…"    10 seconds ago   Up 9 seconds                      0.0.0.0:4040->4040/tcp                                                   ngrok-1
 0062dc427617   postgres:11                              "docker-entrypoint.s…"    10 seconds ago   Up 9 seconds                      5432/tcp                                                                 trino-prestodb-spark-minio-metastore_db-1
 ```
+
+### Data Lakehouse creation
+
+The docker-compose.yml on startup creates a S3 bucket called "warehouse" which will represent the S3-based data lakehouse. 
 
 ### Getting the ngrok address
 
