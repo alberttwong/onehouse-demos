@@ -1300,6 +1300,24 @@ PROPERTIES
 );
 ```
 
+Starrocks' catalog create sql with ngrok URI
+```
+CREATE EXTERNAL CATALOG hudi_catalog_hms
+PROPERTIES
+(
+    "type" = "hudi",
+    "hive.metastore.type" = "hive",
+    "hive.metastore.uris" = "thrift://8.tcp.us-cal-1.ngrok.io:12601",
+    "aws.s3.use_instance_profile" = "false",
+    "aws.s3.access_key" = "admin",
+    "aws.s3.secret_key" = "password",
+    "aws.s3.region" = "us-east-1",
+    "aws.s3.enable_ssl" = "false",
+    "aws.s3.enable_path_style_access" = "true",
+    "aws.s3.endpoint" = "http://2.tcp.us-cal-1.ngrok.io:14995"
+);
+```
+
 ### Onehouse Cloud
 
 Onehouse Cloud is a platform that simplifies the process of building and managing data lakes. It offers a managed lakehouse solution, which combines the best features of data warehouses and data lakes. This means you can enjoy the scalability and flexibility of a data lake while also benefiting from the structured and query-optimized capabilities of a data warehouse. Connect this environment to Onehouse Cloud by configuring the Onehouse Cloud Kafka Source to use the ngrok kafka URL.
