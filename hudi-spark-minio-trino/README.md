@@ -211,6 +211,24 @@ You can explore the new partition folder created in the table along with a "comm
 
 There will be a similar setup when you browse the M-O-R table http://localhost:9001/browser/warehouse/stock_ticks_mor%2F. Login credentials are admin/password.
 
+Another method is to use minio's mc client tool to see the data
+
+```
+docker exec -it spark /bin/bash
+
+# Create the connection
+
+root@spark:/spark-3.4.3-bin-hadoop3/bin# mc alias set minio http://minio:9000 admin password
+
+# Run the ls command to see the contents in the S3 bucket
+
+root@spark:/spark-3.4.3-bin-hadoop3/bin# mc ls minio/warehouse
+[2024-09-09 16:27:27 UTC]     0B stock_ticks_cow/
+[2024-09-09 16:27:27 UTC]     0B stock_ticks_mor/
+root@spark:/spark-3.4.3-bin-hadoop3/bin# mc ls minio/warehouse/stock_ticks_cow
+[2024-09-09 16:27:38 UTC]     0B .hoodie/
+[2024-09-09 16:27:38 UTC]     0B 2018/
+```
 
 ### Step 3: Sync with Hive
 
