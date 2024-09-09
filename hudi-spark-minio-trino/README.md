@@ -12,7 +12,7 @@ These steps have been verified on a Mac ARM laptop, ensuring compatibility and e
     * File Sharing: VirtioFS
     * [If using Mac ARM], Use Rosetta for x86_64/amd64 emulation on Apple Silicon: CHECKED
   * ngrok
-    * Sign up for an account with ngrok, it will be used so that you can access your kafka cluster on the internet.  You will need an ngrok authtoken in the following steps.
+    * Sign up for an account with ngrok, it will be used so that you can access your daemon services on the internet.  You will need an ngrok authtoken in the following steps.
   * Internet connectivity
     * Maven repositories like https://mvnrepository.com
     * Docker Hub
