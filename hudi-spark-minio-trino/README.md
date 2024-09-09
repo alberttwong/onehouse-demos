@@ -50,7 +50,7 @@ At this point, the Docker cluster will be up and running. The demo cluster bring
 
    * Min.IO for Object Store (s3-like service)
    * Spark Master and Worker (execution engine)
-   * Hive Services (Metastore along with PostgresDB, storing data about the Hudi enviornment)
+   * Hive Services (metastore along with PostgresDB, storing data about the Hudi enviornment)
    * Apache Kafka with ngrok enabled (a message service to help move data between systems) 
    * Containers for Trino setup (Trino coordinator and worker, SQL query engine)
    * ngrok proxy (allows the internet and your workstation to access services behind the docker compose network)
