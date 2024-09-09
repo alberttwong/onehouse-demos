@@ -70,7 +70,7 @@ b695f12f9d68   ngrok/ngrok:latest                       "/nix/store/n98vsmwd…"
 
 ### Data Lakehouse creation
 
-The docker-compose.yml on startup creates a S3 bucket called "warehouse" which will represent the S3-based data lakehouse. 
+Upon startup, the docker-compose.yml file creates an S3 bucket named 'warehouse' to serve as the foundation of our S3-based data lakehouse. By leveraging S3 for data storage, we benefit from its virtually limitless capacity, eliminating the need for manual resizing or disruptive downtime. Additionally, S3 storage costs on AWS are typically a fraction of EBS costs, offering significant financial advantages. These cost savings and operational efficiencies make S3 a highly beneficial choice for our data storage needs.
 
 ### Getting the ngrok address
 
