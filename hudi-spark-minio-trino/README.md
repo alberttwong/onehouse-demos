@@ -1284,7 +1284,7 @@ Onehouse LakeView is a free observability service designed specifically for data
 1. Sign up for Onehouse Lakeview at https://cloud.onehouse.ai/lakeview/signup and get an API token.
 2. Shell into the spark container `docker exec -it spark /bin/bash`
 3. Grab the app `wget https://github.com/onehouseinc/LakeView/releases/download/prod-34/LakeView-release-v0.14.0-all.jar -P /opt/lakeview`
-4. Run the Metadata Extractor Tool `java -jar /opt/lakeview/LakeView-release-v0.14.0-all.jar -p /opt/lakeview/hudi.yaml`
+4. Modify `hudi.yaml` with your API token and run the Metadata Extractor Tool `java -jar /opt/lakeview/LakeView-release-v0.14.0-all.jar -p /opt/lakeview/hudi.yaml`
 5. View the report in Onehouse Lakeview at http://cloud.onehouse.ai
 
 ### Apache xTable
@@ -1363,3 +1363,5 @@ Onehouse Cloud is a platform that simplifies the process of building and managin
 ### Hudi on Amazon EMR
 
 In addition to offering Apache Hudi, Amazon provides a comprehensive tutorial on working with Hudi on Amazon EMR. This tutorial covers launching the interactive Spark shell, using Spark submit, and utilizing Amazon EMR Notebooks. It even delves into alternative methods like the Hudi DeltaStreamer utility for writing to your dataset. You can find the tutorial here:   https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-hudi-work-with-dataset.html
+
+<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=ab537f1a-ab7c-4cc8-ab93-81bd51b74e0b" />

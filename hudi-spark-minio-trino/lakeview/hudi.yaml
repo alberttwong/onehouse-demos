@@ -2,10 +2,10 @@ version: V1
 
 onehouseClientConfig:
     # can be obtained from the Onehouse console
-    projectId: c3eb3868-6979-41cd-9018-952d29a43337
-    apiKey: asU2Pb3XaNAc4JwkkWpNUQ== 
-    apiSecret: IBaLVxloIzU36heBooOBsPp5MhD6ijjyIk88zvH2ggs=
-    userId: x2gblCN8xNSurvCsqDaGJ84zy913 
+    projectId: XXXX
+    apiKey: YYYY
+    apiSecret: ZZZZZZ
+    userId: AAAAA
 
 fileSystemConfiguration:
     # Provide either s3Config or gcsConfig
