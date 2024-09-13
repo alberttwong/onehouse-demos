@@ -228,6 +228,9 @@ root@spark:/spark-3.4.3-bin-hadoop3/bin# mc ls minio/warehouse
 root@spark:/spark-3.4.3-bin-hadoop3/bin# mc ls minio/warehouse/stock_ticks_cow
 [2024-09-09 16:27:38 UTC]     0B .hoodie/
 [2024-09-09 16:27:38 UTC]     0B 2018/
+root@spark:/spark-3.4.3-bin-hadoop3/bin# mc ls minio/warehouse/stock_ticks_mor/2018/08/31
+[2024-09-13 17:04:51 UTC]    96B STANDARD .hoodie_partition_metadata
+[2024-09-13 17:04:52 UTC] 434KiB STANDARD e7aefb82-bd77-4df7-a59e-a924e5e418a5-0_0-23-24_20240913170447603.parquet
 ```
 
 ### Step 3: Sync with Hive
