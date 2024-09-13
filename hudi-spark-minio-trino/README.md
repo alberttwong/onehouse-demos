@@ -1281,11 +1281,12 @@ This is an article about Walmart’s migration to a Lakehouse architecture. It d
 
 Onehouse LakeView is a free observability service designed specifically for data lakehouses. It provides data engineers with essential monitoring capabilities and insights to effectively manage and operate their tables.  Only metadata is passed to Onehouse Lakeview.
 
-1. Sign up for Onehouse Lakeview at https://cloud.onehouse.ai/lakeview/signup and get an API token.
-2. Shell into the spark container `docker exec -it spark /bin/bash`
-3. Grab the app `wget https://github.com/onehouseinc/LakeView/releases/download/prod-34/LakeView-release-v0.14.0-all.jar -P /opt/lakeview`
-4. Modify `hudi.yaml` with your API token and run the Metadata Extractor Tool `java -jar /opt/lakeview/LakeView-release-v0.14.0-all.jar -p /opt/lakeview/hudi.yaml`
-5. View the report in Onehouse Lakeview at http://cloud.onehouse.ai
+1. Request access at https://www.onehouse.ai/product/lakeview
+2. Login to Onehouse Lakeview at https://cloud.onehouse.ai/ and get an API token.
+3. Shell into the spark container `docker exec -it spark /bin/bash`
+4. Grab the app `wget https://github.com/onehouseinc/LakeView/releases/download/prod-34/LakeView-release-v0.14.0-all.jar -P /opt/lakeview`
+5. Modify `hudi.yaml` with your API token and run the Metadata Extractor Tool `java -jar /opt/lakeview/LakeView-release-v0.14.0-all.jar -p /opt/lakeview/hudi.yaml`
+6. View the report in Onehouse Lakeview at http://cloud.onehouse.ai
 
 ### Apache xTable
 
