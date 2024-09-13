@@ -1284,7 +1284,7 @@ Onehouse LakeView is a free observability service designed specifically for data
 1. Sign up for Onehouse Lakeview at https://cloud.onehouse.ai/lakeview/signup and get an API token.
 2. Shell into the spark container `docker exec -it spark /bin/bash`
 3. Grab the app `wget https://github.com/onehouseinc/LakeView/releases/download/prod-34/LakeView-release-v0.14.0-all.jar -P /opt/lakeview`
-4. Run the Metadata Extractor Tool `java -jar /opt/lakeview/LakeView-release-v0.14.0-all.jar -p /opt/lakeview/hudi.yaml`
+4. Modify `hudi.yaml` with your API toke and run the Metadata Extractor Tool `java -jar /opt/lakeview/LakeView-release-v0.14.0-all.jar -p /opt/lakeview/hudi.yaml`
 5. View the report in Onehouse Lakeview at http://cloud.onehouse.ai
 
 ### Apache xTable
