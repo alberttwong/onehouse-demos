@@ -33,7 +33,7 @@ Run this when you get the spark-sql prompt
 ```
 CREATE SCHEMA delta_db LOCATION 's3a://warehouse/';
 
-CREATE TABLE delta_db.people USING DELTA LOCATION 's3a://warehouse/people';
+CREATE TABLE delta_db.stock_ticks_cow USING DELTA LOCATION 's3a://warehouse/stock_ticks_cow';
 ```
 
 ###  Run spark-sql with Apache Iceberg libraries to register Apache Iceberg files into Apache Hive MetaStore (HMS)
@@ -54,8 +54,8 @@ Run this when you get the spark-sql prompt
 CREATE SCHEMA iceberg_db;
 
 CALL hive_prod.system.register_table(
-   table => 'hive_prod.iceberg_db.people',
-   metadata_file => 's3a://warehouse/people/metadata/v2.metadata.json'
+   table => 'hive_prod.iceberg_db.stock_ticks_cow',
+   metadata_file => 's3a://warehouse/stock_ticks_cow/metadata/v2.metadata.json'
 );
 ```
 
@@ -90,8 +90,8 @@ Run the following SQL to view the data.
 
 ```
 select * from hudi.hudi_db.people;
-select * from delta.delta_db.people;
-select * from iceberg.iceberg_db.people;
+select * from delta.delta_db.stock_ticks_cow;
+select * from iceberg.iceberg_db.stock_ticks_cow;
 ```
 
 ### Debug
