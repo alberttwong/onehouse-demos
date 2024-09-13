@@ -39,6 +39,8 @@ CREATE TABLE delta_db.people USING DELTA LOCATION 's3a://warehouse/people';
 ###  Run spark-sql with Apache Iceberg libraries to register Apache Iceberg files into Apache Hive MetaStore (HMS)
 
 ```
+docker exec -it spark /bin/bash
+
 spark-sql --packages com.amazonaws:aws-java-sdk-s3:1.11.271,org.apache.hadoop:hadoop-aws:2.10.2,org.apache.iceberg:iceberg-spark-runtime-3.4_2.12:1.5.2 \
 --conf "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions" \
 --conf "spark.sql.catalog.spark_catalog=org.apache.iceberg.spark.SparkSessionCatalog" \
