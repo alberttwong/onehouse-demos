@@ -159,7 +159,7 @@ services:
       minio:
         condition: service_started
     volumes:
-      - ./jars:/opt/xtable/jars
+      - ./xtable:/opt/xtable/jars
       - ./spark/conf/spark-defaults.conf:/spark/conf/spark-defaults.conf:ro
       - ./spark/conf/core-site.xml:/spark/conf/core-site.xml:ro
       - ./spark/conf/core-site.xml:/hadoop/etc/hadoop/core-site.xml:ro
@@ -183,7 +183,7 @@ services:
       minio:
         condition: service_started
     volumes:
-      - ./jars:/opt/xtable/jars
+      - ./xtable:/opt/xtable/jars
       - ./spark/conf/spark-defaults.conf:/spark/conf/spark-defaults.conf:ro
       - ./spark/conf/core-site.xml:/spark/conf/core-site.xml:ro
       - ./spark/conf/core-site.xml:/hadoop/etc/hadoop/core-site.xml:ro
@@ -198,7 +198,7 @@ services:
       "
 
   minio:
-    image: minio/minio
+    image: minio/minio:latest
     environment:
       - MINIO_ROOT_USER=admin
       - MINIO_ROOT_PASSWORD=password
@@ -214,7 +214,7 @@ services:
   mc:
     depends_on:
       - minio
-    image: minio/mc
+    image: minio/mc:latest
     environment:
       - AWS_ACCESS_KEY_ID=admin
       - AWS_SECRET_ACCESS_KEY=password
