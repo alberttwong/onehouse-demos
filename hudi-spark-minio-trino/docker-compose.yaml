@@ -152,7 +152,7 @@ services:
   spark:
     container_name: spark 
     hostname: spark
-    image: 'atwong.docker.scarf.sh/atwong/hudi-openjdk-8-spark-3.4:0.1.1'
+    image: 'atwong.docker.scarf.sh/atwong/hudi-openjdk-8-spark-3.4:latest'
     depends_on:
       hive-metastore:
         condition: service_healthy
@@ -176,7 +176,7 @@ services:
   openjdk8:
     container_name: openjdk8
     hostname: openjdk8
-    image: 'atwong.docker.scarf.sh/atwong/hudi-openjdk-8-spark-3.4-hive-2.3.9-hadoop-2.10.2:0.1.1'
+    image: 'atwong.docker.scarf.sh/atwong/hudi-openjdk-8-spark-3.4-hive-2.3.9-hadoop-2.10.2:latest'
     depends_on:
       hive-metastore:
         condition: service_healthy
@@ -200,7 +200,7 @@ services:
   openjdk11:
     container_name: openjdk11
     hostname: openjdk11
-    image: 'atwong.docker.scarf.sh/atwong/hudi-openjdk-11-spark-3.4-hive-2.3.9-hadoop-2.10.2:0.1.1'
+    image: 'atwong.docker.scarf.sh/atwong/hudi-openjdk-11-spark-3.4-hive-2.3.9-hadoop-2.10.2:latest'
     depends_on:
       hive-metastore:
         condition: service_healthy
