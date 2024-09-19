@@ -32,6 +32,13 @@ To ensure clarity and understanding, we'll provide a detailed explanation of eac
 
 To improve performance, we cache the JARs needed for the demo in the spark/jars and spark/cache directories after the initial download.  When you want to switch to a different Spark or Hudi version or have class conflicts, please clear them out by typing `rm -Rf spark/jars/*.jar` and `rm -Rf spark/cache/*`
 
+## Downloading the Environment
+
+Clone this git repository.
+
+```
+git clone https://github.com/alberttwong/onehouse-demos/edit/main/hudi-spark-minio-trino
+```
 
 ## Setting up Docker Cluster
 
