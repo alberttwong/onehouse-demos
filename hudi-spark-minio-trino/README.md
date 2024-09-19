@@ -96,7 +96,9 @@ t=2024-09-07T00:05:31+0000 lvl=info msg="started tunnel" obj=tunnels name=kafka 
 
 Your kafka URI in this situation is `tcp://2.tcp.us-cal-1.ngrok.io:19757`.  It will change every time you startup this demo environment.
 
-## conduktor or any other kafka toolling for kafka browsing
+## [Optional] conduktor or any other kafka toolling for kafka browsing
+
+This an optional step.
 
 To monitor your Kafka topics and messages in real-time, you can leverage any Kafka browser of your choice. While I've personally tested Conduktor, any compatible tool will work.
 
