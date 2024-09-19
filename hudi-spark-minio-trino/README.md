@@ -35,6 +35,18 @@ Apache Hudi is compatible with JDK 8 and can be compiled and run on this version
 
 For this demonstration, we'll be using Hudi 0.15 and Spark 3.4. You can easily adapt these instructions to other versions by modifying the libraries you download. In addition, we will be deploying Apache Hudi in a S3-based data lakehouse environment and using Spark and SQL query engine tools like Trino to query the data in the data lakehouse.
 
+### Spark 3 Support Matrix
+| Hudi            | Supported Spark 3 version                                |
+| --------------- | -------------------------------------------------------- |
+| 0.15.x          | 3.5.x (default build), 3.4.x, 3.3.x, 3.2.x, 3.1.x, 3.0.x |
+| 0.14.x          | 3.4.x (default build), 3.3.x, 3.2.x, 3.1.x, 3.0.x        |
+| 0.13.x          | 3.3.x (default build), 3.2.x, 3.1.x                      |
+| 0.12.x          | 3.3.x (default build), 3.2.x, 3.1.x                      |
+| 0.11.x          | 3.2.x (default build, Spark bundle only), 3.1.x          |
+| 0.10.x          | 3.1.x (default build), 3.0.x                             |
+| 0.7.0 - 0.9.0   | 3.0.x                                                    |
+| 0.6.0 and prior | not supported                                            |
+
 To ensure clarity and understanding, we'll provide a detailed explanation of each step involved in the process.
 
 ## Reset the enviroment
