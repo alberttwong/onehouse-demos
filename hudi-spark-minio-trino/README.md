@@ -1,4 +1,4 @@
-## A Demo using Docker containers
+## Apache Hudi Demo using Docker containers
 
 Let’s dive into a real-world scenario to understand Hudi’s capabilities from start to finish. To provide a self-contained environment, we've set up a local Docker cluster on your workstation.
 
@@ -20,11 +20,32 @@ These steps have been verified on a Mac ARM laptop, ensuring compatibility and e
     
 Also, this has not been tested on some environments like Docker on Windows.
 
+## Why a data lakehouse and Why Apache Hudi
+
+If you're not familiar with what is a data lakehouse or why Apache Hudi, the follow are material that will help you understand the concepts.
+
+* [What is a Data Lakehouse & How does it Work?](https://hudi.apache.org/blog/2024/07/11/what-is-a-data-lakehouse)
+* [It’s Time for the Universal Data Lakehouse‍](https://www.onehouse.ai/blog/its-time-for-the-universal-data-lakehouse)
+* [Apache Hudi vs Delta Lake vs Apache Iceberg - Data Lakehouse Feature Comparison](https://www.onehouse.ai/blog/apache-hudi-vs-delta-lake-vs-apache-iceberg-lakehouse-feature-comparison)
+* [Comparing Apache Hudi's MOR (50% read and 50% write workload pattern) and COW Tables (90% read and 10% write workload pattern)](https://www.onehouse.ai/blog/comparing-apache-hudis-mor-and-cow-tables-use-cases-from-uber-and-shopee)
+
 ## Talking about Apache Hudi demo
 
 Apache Hudi is compatible with JDK 8 and can be compiled and run on this version. While you might not need to compile the code yourself, we've provided the source code in the /opt/hudi directory. You can use `git pull` to fetch the latest updates or `git checkout release-0.15.0` to switch to a specific version like Hudi 0.15.
 
 For this demonstration, we'll be using Hudi 0.15 and Spark 3.4. You can easily adapt these instructions to other versions by modifying the libraries you download. In addition, we will be deploying Apache Hudi in a S3-based data lakehouse environment and using Spark and SQL query engine tools like Trino to query the data in the data lakehouse.
+
+### Spark 3 Support Matrix
+| Hudi            | Supported Spark 3 version                                |
+| --------------- | -------------------------------------------------------- |
+| 0.15.x          | 3.5.x (default build), 3.4.x, 3.3.x, 3.2.x, 3.1.x, 3.0.x |
+| 0.14.x          | 3.4.x (default build), 3.3.x, 3.2.x, 3.1.x, 3.0.x        |
+| 0.13.x          | 3.3.x (default build), 3.2.x, 3.1.x                      |
+| 0.12.x          | 3.3.x (default build), 3.2.x, 3.1.x                      |
+| 0.11.x          | 3.2.x (default build, Spark bundle only), 3.1.x          |
+| 0.10.x          | 3.1.x (default build), 3.0.x                             |
+| 0.7.0 - 0.9.0   | 3.0.x                                                    |
+| 0.6.0 and prior | not supported                                            |
 
 To ensure clarity and understanding, we'll provide a detailed explanation of each step involved in the process.
 
@@ -32,6 +53,13 @@ To ensure clarity and understanding, we'll provide a detailed explanation of eac
 
 To improve performance, we cache the JARs needed for the demo in the spark/jars and spark/cache directories after the initial download.  When you want to switch to a different Spark or Hudi version or have class conflicts, please clear them out by typing `rm -Rf spark/jars/*.jar` and `rm -Rf spark/cache/*`
 
+## Downloading the Environment
+
+Clone this git repository.
+
+```
+git clone https://github.com/alberttwong/onehouse-demos/edit/main/hudi-spark-minio-trino
+```
 
 ## Setting up Docker Cluster
 
@@ -81,7 +109,9 @@ t=2024-09-07T00:05:31+0000 lvl=info msg="started tunnel" obj=tunnels name=kafka 
 
 Your kafka URI in this situation is `tcp://2.tcp.us-cal-1.ngrok.io:19757`.  It will change every time you startup this demo environment.
 
-## conduktor or any other kafka toolling for kafka browsing
+## [Optional] conduktor or any other kafka toolling for kafka browsing
+
+This an optional step.
 
 To monitor your Kafka topics and messages in real-time, you can leverage any Kafka browser of your choice. While I've personally tested Conduktor, any compatible tool will work.
 
@@ -228,6 +258,9 @@ root@spark:/spark-3.4.3-bin-hadoop3/bin# mc ls minio/warehouse
 root@spark:/spark-3.4.3-bin-hadoop3/bin# mc ls minio/warehouse/stock_ticks_cow
 [2024-09-09 16:27:38 UTC]     0B .hoodie/
 [2024-09-09 16:27:38 UTC]     0B 2018/
+root@spark:/spark-3.4.3-bin-hadoop3/bin# mc ls minio/warehouse/stock_ticks_mor/2018/08/31
+[2024-09-13 17:04:51 UTC]    96B STANDARD .hoodie_partition_metadata
+[2024-09-13 17:04:52 UTC] 434KiB STANDARD e7aefb82-bd77-4df7-a59e-a924e5e418a5-0_0-23-24_20240913170447603.parquet
 ```
 
 ### Step 3: Sync with Hive
@@ -1281,15 +1314,16 @@ This is an article about Walmart’s migration to a Lakehouse architecture. It d
 
 Onehouse LakeView is a free observability service designed specifically for data lakehouses. It provides data engineers with essential monitoring capabilities and insights to effectively manage and operate their tables.  Only metadata is passed to Onehouse Lakeview.
 
-1. Sign up for Onehouse Lakeview at https://cloud.onehouse.ai/lakeview/signup and get an API token.
-2. Shell into the spark container `docker exec -it spark /bin/bash`
-3. Grab the app `wget https://github.com/onehouseinc/LakeView/releases/download/prod-34/LakeView-release-v0.14.0-all.jar -P /opt/lakeview`
-4. Modify `hudi.yaml` with your API token and run the Metadata Extractor Tool `java -jar /opt/lakeview/LakeView-release-v0.14.0-all.jar -p /opt/lakeview/hudi.yaml`
-5. View the report in Onehouse Lakeview at http://cloud.onehouse.ai
+1. Request access at https://www.onehouse.ai/product/lakeview
+2. Login to Onehouse Lakeview at https://cloud.onehouse.ai/ and get an API token.
+3. Shell into the spark container `docker exec -it spark /bin/bash`
+4. Grab the app `wget https://github.com/alberttwong/LakeView/releases/download/1.0-SNAPSHOT/LakeView-1.0-SNAPSHOT-all.jar -P /opt/lakeview`
+5. Modify `hudi.yaml` with your API token and run the Metadata Extractor Tool `java -jar /opt/lakeview/LakeView-release-v0.14.0-all.jar -p /opt/lakeview/hudi.yaml`
+6. View the report in Onehouse Lakeview at http://cloud.onehouse.ai
 
 ### Apache xTable
 
-Apache XTable is an open-source project that aims to simplify data lake operations by providing a common model for table representation. It acts as a cross-table converter, facilitating interoperability between different lakehouse table formats like Apache Hudi, Apache Iceberg, and Delta Lake. You can easily add Apache xTable to this demo.   Just follow the steps in the Apache xTable Quickstart using this docker compose.
+Apache XTable is an open-source project that aims to simplify data lake operations by providing a common model for table representation. It acts as a cross-table converter, facilitating interoperability between different lakehouse table formats like Apache Hudi, Apache Iceberg, and Delta Lake. You can easily add Apache xTable to this demo.   Just follow the steps in the Apache xTable Quickstart using this docker compose.  See xtable.md for instructions.
 
 ### Apache SuperSet
 
@@ -1362,6 +1396,6 @@ Onehouse Cloud is a platform that simplifies the process of building and managin
 
 ### Hudi on Amazon EMR
 
-In addition to offering Apache Hudi, Amazon provides a comprehensive tutorial on working with Hudi on Amazon EMR. This tutorial covers launching the interactive Spark shell, using Spark submit, and utilizing Amazon EMR Notebooks. It even delves into alternative methods like the Hudi DeltaStreamer utility for writing to your dataset. You can find the tutorial here:   https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-hudi-work-with-dataset.html
+In addition to offering Apache Hudi, Amazon provides a comprehensive tutorial on working with Hudi on Amazon EMR. This tutorial covers launching the interactive Spark shell, using Spark submit, and utilizing Amazon EMR Notebooks. It even delves into alternative methods like the Hudi Streamer utility for writing to your dataset. You can find the tutorial here:   https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-hudi-work-with-dataset.html
 
 <img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=ab537f1a-ab7c-4cc8-ab93-81bd51b74e0b" />
