@@ -22,12 +22,12 @@ Also, this has not been tested on some environments like Docker on Windows.
 
 ## Why a data lakehouse and Why Apache Hudi
 
-If you're not familiar with what is a data lakehouse or why Apache Hudi, the follow are material that will help you understand the concepts.
+Here are some resources to help you understand data lakehouses and Apache Hudi:
 
 * [What is a Data Lakehouse & How does it Work?](https://hudi.apache.org/blog/2024/07/11/what-is-a-data-lakehouse)
 * [It’s Time for the Universal Data Lakehouse‍](https://www.onehouse.ai/blog/its-time-for-the-universal-data-lakehouse)
 * [Apache Hudi vs Delta Lake vs Apache Iceberg - Data Lakehouse Feature Comparison](https://www.onehouse.ai/blog/apache-hudi-vs-delta-lake-vs-apache-iceberg-lakehouse-feature-comparison)
-* [Comparing Apache Hudi's MOR (read and write balanaced, streaming friendly workload pattern) and COW Tables (read heavy workload pattern)](https://www.onehouse.ai/blog/comparing-apache-hudis-mor-and-cow-tables-use-cases-from-uber-and-shopee)
+* [Comparing Apache Hudi's MOR (read and streaming write workload pattern) and COW Tables (read heavy workload pattern)](https://www.onehouse.ai/blog/comparing-apache-hudis-mor-and-cow-tables-use-cases-from-uber-and-shopee)
 
 ## Talking about Apache Hudi demo
 
