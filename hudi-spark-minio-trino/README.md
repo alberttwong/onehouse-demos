@@ -1383,6 +1383,6 @@ Onehouse Cloud is a platform that simplifies the process of building and managin
 
 ### Hudi on Amazon EMR
 
-In addition to offering Apache Hudi, Amazon provides a comprehensive tutorial on working with Hudi on Amazon EMR. This tutorial covers launching the interactive Spark shell, using Spark submit, and utilizing Amazon EMR Notebooks. It even delves into alternative methods like the Hudi DeltaStreamer utility for writing to your dataset. You can find the tutorial here:   https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-hudi-work-with-dataset.html
+In addition to offering Apache Hudi, Amazon provides a comprehensive tutorial on working with Hudi on Amazon EMR. This tutorial covers launching the interactive Spark shell, using Spark submit, and utilizing Amazon EMR Notebooks. It even delves into alternative methods like the Hudi Streamer utility for writing to your dataset. You can find the tutorial here:   https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-hudi-work-with-dataset.html
 
 <img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=ab537f1a-ab7c-4cc8-ab93-81bd51b74e0b" />
