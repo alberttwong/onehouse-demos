@@ -27,6 +27,7 @@ If you're not familiar with what is a data lakehouse or why Apache Hudi, the fol
 * [What is a Data Lakehouse & How does it Work?](https://hudi.apache.org/blog/2024/07/11/what-is-a-data-lakehouse)
 * [It’s Time for the Universal Data Lakehouse‍](https://www.onehouse.ai/blog/its-time-for-the-universal-data-lakehouse)
 * [Apache Hudi vs Delta Lake vs Apache Iceberg - Data Lakehouse Feature Comparison](https://www.onehouse.ai/blog/apache-hudi-vs-delta-lake-vs-apache-iceberg-lakehouse-feature-comparison)
+* [Comparing Apache Hudi's MOR (50% read and 50% write workload pattern) and COW Tables (90% read and 10% write workload pattern)](https://www.onehouse.ai/blog/comparing-apache-hudis-mor-and-cow-tables-use-cases-from-uber-and-shopee)
 
 ## Talking about Apache Hudi demo
 
