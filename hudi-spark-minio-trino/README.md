@@ -1323,7 +1323,7 @@ Onehouse LakeView is a free observability service designed specifically for data
 
 ### Apache xTable
 
-Apache XTable is an open-source project that aims to simplify data lake operations by providing a common model for table representation. It acts as a cross-table converter, facilitating interoperability between different lakehouse table formats like Apache Hudi, Apache Iceberg, and Delta Lake. You can easily add Apache xTable to this demo.   Just follow the steps in the Apache xTable Quickstart using this docker compose.  See xtable.md for instructions.
+Apache XTable is an open-source project that aims to simplify data lake operations by providing a common model for table representation. It acts as a cross-table converter, facilitating interoperability between different lakehouse table formats like Apache Hudi, Apache Iceberg, and Delta Lake. You can easily add Apache xTable to this demo.   Just follow the steps in the Apache xTable Quickstart using this docker compose.  See [xtable.md](xtable.md) for instructions.
 
 ### Apache SuperSet
 
