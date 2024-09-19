@@ -1,4 +1,4 @@
-## A Demo using Docker containers
+## A Apache Hudi Demo using Docker containers
 
 Let’s dive into a real-world scenario to understand Hudi’s capabilities from start to finish. To provide a self-contained environment, we've set up a local Docker cluster on your workstation.
 
@@ -19,6 +19,13 @@ These steps have been verified on a Mac ARM laptop, ensuring compatibility and e
     * Others
     
 Also, this has not been tested on some environments like Docker on Windows.
+
+## Why a data lakehouse and Why Apache Hudi
+
+If you're not familiar with what is a data lakehouse or why Apache Hudi, the follow are material that will help you understand the concepts.
+
+* [It’s Time for the Universal Data Lakehouse‍](https://www.onehouse.ai/blog/its-time-for-the-universal-data-lakehouse)
+* [Apache Hudi vs Delta Lake vs Apache Iceberg - Data Lakehouse Feature Comparison](https://www.onehouse.ai/blog/apache-hudi-vs-delta-lake-vs-apache-iceberg-lakehouse-feature-comparison)
 
 ## Talking about Apache Hudi demo
 
