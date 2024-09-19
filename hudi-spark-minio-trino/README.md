@@ -1,4 +1,4 @@
-## A Apache Hudi Demo using Docker containers
+## Apache Hudi Demo using Docker containers
 
 Let’s dive into a real-world scenario to understand Hudi’s capabilities from start to finish. To provide a self-contained environment, we've set up a local Docker cluster on your workstation.
 
