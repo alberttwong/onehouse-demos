@@ -1314,6 +1314,10 @@ This is an article about Walmart’s migration to a Lakehouse architecture. It d
 
 This is an article about Notion’s journey through different stages of data scale. It discusses the challenges they faced as their data grew and how they overcame them by adopting a universal data lakehouse architecture. The article also details the benefits of using Hudi, an open source data lakehouse engine. Some of the benefits that Notion experienced include cost savings, performance improvements, and the ability to enable new product features. https://www.onehouse.ai/blog/notions-journey-through-different-stages-of-data-scale
 
+### Case Study: Robinhood
+
+This is an article about Robinhood's data lakehouse. It discusses what a data lakehouse is and Robinhood's use of Apache Hudi. The data lakehouse stores more than 50,000 datasets. It ingests data from various sources and makes it available to consumers for different use cases. To support the various use cases, Robinhood built a multi-tiered architecture. https://www.onehouse.ai/blog/scaling-and-governing-robinhoods-data-lakehouse
+
 ### Onehouse Lakeview
 
 Onehouse LakeView is a free observability service designed specifically for data lakehouses. It provides data engineers with essential monitoring capabilities and insights to effectively manage and operate their tables.  Only metadata is passed to Onehouse Lakeview.
