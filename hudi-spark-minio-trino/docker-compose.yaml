@@ -55,21 +55,24 @@ services:
       - /bin/sh 
       - -c 
       - |
-        echo "Waiting for ngrok tunnel to be created"
-        while : ; do
-          curl_status=$$(curl -s -o /dev/null -w %{http_code} http://ngrok:4040/api/tunnels/kafka)
-          echo -e $$(date) "\tTunnels API HTTP state: " $$curl_status " (waiting for 200)"
-          if [ $$curl_status -eq 200 ] ; then
-            break
-          fi
-          sleep 5 
-        done
-        echo "ngrok tunnel is up"
-        NGROK_LISTENER=$(curl -s  http://ngrok:4040/api/tunnels/kafka | grep -Po '"public_url":.*?[^\\]",' | cut -d':' -f2- | tr -d ',"' | sed 's/tcp:\/\//NGROK:\/\//g')
-        echo $$NGROK_LISTENER
-        export KAFKA_ADVERTISED_LISTENERS="$$KAFKA_ADVERTISED_LISTENERS, $$NGROK_LISTENER"
-        echo "KAFKA_ADVERTISED_LISTENERS is set to " $$KAFKA_ADVERTISED_LISTENERS
-        /docker-entrypoint.sh start
+        if [[ -v HUDI_DOCKER_NGROK ]]; then
+          echo "Waiting for ngrok tunnel to be created"
+          while : ; do
+            curl_status=$$(curl -s -o /dev/null -w %{http_code} http://ngrok:4040/api/tunnels/kafka)
+            echo -e $$(date) "\tTunnels API HTTP state: " $$curl_status " (waiting for 200)"
+            if [ $$curl_status -eq 200 ] ; then
+              break
+            fi
+            sleep 5 
+          done
+          echo "ngrok tunnel is up"
+          NGROK_LISTENER=$(curl -s  http://ngrok:4040/api/tunnels/kafka | grep -Po '"public_url":.*?[^\\]",' | cut -d':' -f2- | tr -d ',"' | sed 's/tcp:\/\//NGROK:\/\//g')
+          echo $$NGROK_LISTENER
+          export KAFKA_ADVERTISED_LISTENERS="$$KAFKA_ADVERTISED_LISTENERS, $$NGROK_LISTENER"
+          echo "KAFKA_ADVERTISED_LISTENERS is set to " $$KAFKA_ADVERTISED_LISTENERS
+        else
+          /docker-entrypoint.sh start
+        fi
 
   trino:
     container_name: trino
