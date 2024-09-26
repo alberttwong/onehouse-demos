@@ -67,7 +67,7 @@ git clone https://github.com/alberttwong/onehouse-demos/edit/main/hudi-spark-min
 
 ## Setting up Docker Cluster
 
-### [Optional] Enabling NGROK for internet routing containers within the Docker Network
+### [Suggested] Enabling NGROK for internet routing containers within the Docker Network
 
 Sign up for an free NGROK token at https://ngrok.com/.  NGROK will be used so that you can access your kafka cluster on the internet and on your local workstation even though it's behind the docker network.
 
@@ -112,7 +112,7 @@ In addition, some of the example outputs will have ngrok in the URI. This is bec
 
 Upon startup, the docker-compose.yml file creates an S3 bucket named 'warehouse' to serve as the foundation of our S3-based data lakehouse. By leveraging S3 for data storage, we benefit from its virtually limitless capacity, eliminating the need for manual resizing or disruptive downtime. Additionally, S3 storage costs on AWS are typically a fraction of EBS costs, offering significant financial advantages. These cost savings and operational efficiencies make S3 a highly beneficial choice for our data storage needs.
 
-### [Optional] Getting the ngrok address
+### [Suggested] Getting the ngrok address
 
 ```
 docker logs ngrok |grep "started tunnel"
