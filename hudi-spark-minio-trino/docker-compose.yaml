@@ -71,8 +71,9 @@ services:
           export KAFKA_ADVERTISED_LISTENERS="$$KAFKA_ADVERTISED_LISTENERS, $$NGROK_LISTENER"
           echo "KAFKA_ADVERTISED_LISTENERS is set to " $$KAFKA_ADVERTISED_LISTENERS
         else
-          /docker-entrypoint.sh start
+          export KAFKA_ADVERTISED_LISTENERS="$$KAFKA_ADVERTISED_LISTENERS, NGROK://kafka:9092"
         fi
+        /docker-entrypoint.sh start
 
   trino:
     container_name: trino
