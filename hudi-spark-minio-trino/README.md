@@ -72,7 +72,6 @@ git clone https://github.com/alberttwong/onehouse-demos/edit/main/hudi-spark-min
 Sign up for an free NGROK token at https://ngrok.com/.  NGROK will be used so that you can access your kafka cluster on the internet and on your local workstation even though it's behind the docker network.
 
 ```
-export HUDI_DOCKER_NGROK=1
 export NGROK_AUTHTOKEN=XXXXXX
 ```
 
