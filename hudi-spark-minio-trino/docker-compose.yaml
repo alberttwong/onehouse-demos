@@ -55,7 +55,7 @@ services:
       - /bin/sh 
       - -c 
       - |
-        if [[ -v HUDI_DOCKER_NGROK ]]; then
+        if [[ -v NGROK_AUTHTOKEN ]]; then
           echo "Waiting for ngrok tunnel to be created"
           while : ; do
             curl_status=$$(curl -s -o /dev/null -w %{http_code} http://ngrok:4040/api/tunnels/kafka)
