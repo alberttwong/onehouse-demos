@@ -35,6 +35,8 @@ Apache Hudi is compatible with JDK 8 and can be compiled and run on this version
 
 For this demonstration, we'll be using Hudi 0.15 and Spark 3.4. You can easily adapt these instructions to other versions by modifying the libraries you download. In addition, we will be deploying Apache Hudi in a S3-based data lakehouse environment and using Spark and SQL query engine tools like Trino to query the data in the data lakehouse.
 
+To ensure clarity and understanding, we'll provide a detailed explanation of each step involved in the process.
+
 ### Spark 3 Support Matrix
 | Hudi            | Supported Spark 3 version                                |
 | --------------- | -------------------------------------------------------- |
@@ -47,7 +49,9 @@ For this demonstration, we'll be using Hudi 0.15 and Spark 3.4. You can easily a
 | 0.7.0 - 0.9.0   | 3.0.x                                                    |
 | 0.6.0 and prior | not supported                                            |
 
-To ensure clarity and understanding, we'll provide a detailed explanation of each step involved in the process.
+### Figuring out what libraries to use
+
+When you use a specific version of Hudi, you will sometimes need to download a version of Hadoop to match.   For instance, if you are using Apache Hudi 0.14, the [pom.xml](https://github.com/apache/hudi/blob/release-0.14.0/pom.xml) says that it was compiled with Hadoop 2.10.1.   Therefore you will need to use aws-hadoop 2.10.1 which you can get at https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-aws/2.10.1 and then the corresponding aws sdk at https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-bundle/1.11.271.  See this article on [Determine Compatibility of hadoop-aws and aws-java-sdk-bundle JARs](https://coding-stream-of-consciousness.com/2019/06/07/determine-compatibility-of-hadoop-aws-and-aws-java-sdk-bundle-jars/) for more information.
 
 ## Reset the enviroment
 
@@ -1309,6 +1313,14 @@ Finally let's connect! Join our Slack community to share your thoughts on the Hu
 ### Case Study: Walmart
 
 This is an article about Walmart’s migration to a Lakehouse architecture. It discusses the challenges of using a traditional Data Lake and the benefits of using a Lakehouse. The article also details Walmart’s evaluation of different Lakehouse technologies. Ultimately, Walmart chose Apache Hudi to power their Lakehouse. https://medium.com/walmartglobaltech/lakehouse-at-fortune-1-scale-480bcb10391b
+
+### Case Study: Notion
+
+This is an article about Notion’s journey through different stages of data scale. It discusses the challenges they faced as their data grew and how they overcame them by adopting a universal data lakehouse architecture. The article also details the benefits of using Hudi, an open source data lakehouse engine. Some of the benefits that Notion experienced include cost savings, performance improvements, and the ability to enable new product features. https://www.onehouse.ai/blog/notions-journey-through-different-stages-of-data-scale
+
+### Case Study: Robinhood
+
+This is an article about Robinhood's data lakehouse. It discusses what a data lakehouse is and Robinhood's use of Apache Hudi. The data lakehouse stores more than 50,000 datasets. It ingests data from various sources and makes it available to consumers for different use cases. To support the various use cases, Robinhood built a multi-tiered architecture. https://www.onehouse.ai/blog/scaling-and-governing-robinhoods-data-lakehouse
 
 ### Onehouse Lakeview
 
