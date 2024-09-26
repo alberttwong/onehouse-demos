@@ -67,14 +67,19 @@ git clone https://github.com/alberttwong/onehouse-demos/edit/main/hudi-spark-min
 
 ## Setting up Docker Cluster
 
-### Bringing up Demo Cluster
-
-This should pull the Docker images from Docker hub and setup the Docker cluster.
+### [Optional] Enabling NGROK for internet routing containers within the Docker Network
 
 Sign up for an free NGROK token at https://ngrok.com/.  NGROK will be used so that you can access your kafka cluster on the internet and on your local workstation even though it's behind the docker network.
 
 ```
+export HUDI_DOCKER_NGROK=1
 export NGROK_AUTHTOKEN=XXXXXX
+```
+
+### Bringing up Demo Cluster
+
+This should pull the Docker images from Docker hub and setup the Docker cluster.
+```
 docker compose up
 ```
 
@@ -100,11 +105,15 @@ b695f12f9d68   ngrok/ngrok:latest                       "/nix/store/n98vsmwd…"
 0062dc427617   postgres:11                              "docker-entrypoint.s…"    10 seconds ago   Up 9 seconds                      5432/tcp                                                                 trino-prestodb-spark-minio-metastore_db-1
 ```
 
+If you did not enable NGROK, you'll see that the container will fail to start. Please ignore this and continue with the demo.
+
+In addition, some of the example outputs will have ngrok in the URI. This is because the example outputs were from my machine. They should not be exact but similar on your machine.
+
 ### Data Lakehouse creation
 
 Upon startup, the docker-compose.yml file creates an S3 bucket named 'warehouse' to serve as the foundation of our S3-based data lakehouse. By leveraging S3 for data storage, we benefit from its virtually limitless capacity, eliminating the need for manual resizing or disruptive downtime. Additionally, S3 storage costs on AWS are typically a fraction of EBS costs, offering significant financial advantages. These cost savings and operational efficiencies make S3 a highly beneficial choice for our data storage needs.
 
-### Getting the ngrok address
+### [Optional] Getting the ngrok address
 
 ```
 docker logs ngrok |grep "started tunnel"
