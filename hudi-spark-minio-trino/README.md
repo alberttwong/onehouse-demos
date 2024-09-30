@@ -279,6 +279,22 @@ root@spark:/spark-3.4.3-bin-hadoop3/bin# mc ls minio/warehouse/stock_ticks_mor/2
 
 At this step, the tables are available in S3. We need to sync with Hive to create new Hive tables and add partitions inorder to run queries against those tables.  We will use a different container because Hudi Hive Sync requires a full installation of Spark, Hadoop and Hive inorder for the utility to run.
 
+If not older than Hudi 1.0 releases, here is a screenshot after modifications to the shell script.
+![hivesync_classpath](https://github.com/user-attachments/assets/b782caaf-239c-4382-a4e4-c8d04ca21f58)
+
+```java
+docker exec -it openjdk8 /bin/bash
+
+# If needed, we need to modify the existing run_sync_tool.sh with additional classpaths HUDI_CLASSPATH.  Here is the [before](https://github.com/apache/hudi/blob/47bdc2709566f726fa503919c87004ec26f14817/hudi-sync/hudi-hive-sync/run_sync_tool.sh#L55) and this is the [after with modifications](https://github.com/apache/hudi/blob/4e98278fdd6ff7455bd290871a542d740eaf471a/hudi-sync/hudi-hive-sync/run_sync_tool.sh#L55). Save and exit.
+
+vi /opt/hudi/hudi-sync/hudi-hive-sync/run_sync_tool.sh
+
+# The new java launch should look like
+
+echo "Running Command : java -cp ${HUDI_CLASSPATH}:${HADOOP_HIVE_JARS}:${HADOOP_CONF_DIR}:$HUDI_HIVE_UBER_JAR org.apache.hudi.hive.HiveSyncTool $@"
+java -cp ${HUDI_CLASSPATH}:$HUDI_HIVE_UBER_JAR:${HADOOP_HIVE_JARS}:${HADOOP_CONF_DIR} org.apache.hudi.hive.HiveSyncTool "$@"
+````
+
 ```java
 docker exec -it openjdk8 /bin/bash
 
@@ -290,15 +306,6 @@ aws-java-sdk-bundle-1.11.271.jar  hadoop-aws-2.10.2.jar  libthrift-0.13.0.jar
 # Add the sync libraries to classpath
 
 export HUDI_CLASSPATH=/opt/hudisync/*
-
-# If needed, we need to modify the existing run_sync_tool.sh with additional classpaths HUDI_CLASSPATH.  Here is the [before](https://github.com/apache/hudi/blob/47bdc2709566f726fa503919c87004ec26f14817/hudi-sync/hudi-hive-sync/run_sync_tool.sh#L55) and this is the [after with modifications](https://github.com/apache/hudi/blob/4e98278fdd6ff7455bd290871a542d740eaf471a/hudi-sync/hudi-hive-sync/run_sync_tool.sh#L55). Save and exit.
-
-vi /opt/hudi/hudi-sync/hudi-hive-sync/run_sync_tool.sh
-
-# The new java launch should look like
-
-echo "Running Command : java -cp ${HUDI_CLASSPATH}:${HADOOP_HIVE_JARS}:${HADOOP_CONF_DIR}:$HUDI_HIVE_UBER_JAR org.apache.hudi.hive.HiveSyncTool $@"
-java -cp ${HUDI_CLASSPATH}:$HUDI_HIVE_UBER_JAR:${HADOOP_HIVE_JARS}:${HADOOP_CONF_DIR} org.apache.hudi.hive.HiveSyncTool "$@"
 
 # This command takes in HiveServer URL and COW Hudi table location in S3 and sync the S3 state to Hive
 
