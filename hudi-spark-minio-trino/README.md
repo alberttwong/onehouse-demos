@@ -291,7 +291,7 @@ aws-java-sdk-bundle-1.11.271.jar  hadoop-aws-2.10.2.jar  libthrift-0.13.0.jar
 
 export HUDI_CLASSPATH=/opt/hudisync/*
 
-# If needed, we need to modify the existing run_sync_tool.sh with additional classpaths HUDI_CLASSPATH.  Save and exit.
+# If needed, we need to modify the existing run_sync_tool.sh with additional classpaths HUDI_CLASSPATH.  Here is the [before](https://github.com/apache/hudi/blob/47bdc2709566f726fa503919c87004ec26f14817/hudi-sync/hudi-hive-sync/run_sync_tool.sh#L55) and this is the [after with modifications](https://github.com/apache/hudi/blob/4e98278fdd6ff7455bd290871a542d740eaf471a/hudi-sync/hudi-hive-sync/run_sync_tool.sh#L55). Save and exit.
 
 vi /opt/hudi/hudi-sync/hudi-hive-sync/run_sync_tool.sh
 
