@@ -1383,7 +1383,7 @@ albert@albertonehouse hudi-spark-minio-trino % docker logs ngrok |grep "started 
 t=2024-09-09T15:28:51+0000 lvl=info msg="started tunnel" obj=tunnels name=trino addr=//trino:8080 url=tcp://0.tcp.us-cal-1.ngrok.io:11058
 ```
 
-![Screenshot 2024-10-14 at 9 31 02 PM](https://github.com/user-attachments/assets/e7e8a10a-2be3-408a-aadf-f5a2bf3f5d60)
+![Screenshot 2024-10-14 at 9 31 02 PM](https://github.com/user-attachments/assets/09d4c526-82c2-4219-bfae-33da8a860099)
 
 
 ### StarRocks
