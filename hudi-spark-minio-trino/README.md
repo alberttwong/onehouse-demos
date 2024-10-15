@@ -1404,7 +1404,30 @@ trino
 starrocks
 ```
 
-2. Expose the trino endpoint by modifying the ngrok.yml to enable ngrok on Trino. 
+Now you have 2 options, you can either #A add superset into the same "demo" docker network or #B enable a ngrok endpoint and have Superset connect to that URI.
+
+2A. Add Apache Superset to "demo" Docker network
+
+Modify docker-compose-image-tag.yml and add in a new networks section like below.
+```
+albert@albertonehouse superset % cat docker-compose-image-tag.yml | tail -10
+  superset_home:
+    external: false
+  db_home:
+    external: false
+  redis:
+    external: false
+
+networks:
+  default:
+     name: datalakehouse
+```
+
+Then you can just go to Trino and use the database wizard.
+
+![Screenshot 2024-10-14 at 9 31 02 PM](https://github.com/user-attachments/assets/09d4c526-82c2-4219-bfae-33da8a860099)
+
+2B. Expose the trino endpoint by modifying the ngrok.yml to enable ngrok on Trino. 
 
 Here is an example of the modifications in ngrok.yml to expose trino to the internet and workstation.
 ```
@@ -1416,16 +1439,11 @@ tunnels:
     proto: tcp
 ```
 
-3. Connect Apache SuperSet to TrinoDB
-
 Put in the trino ngrok URI into the database connection wizard in Apache Superset
 ```
 albert@albertonehouse hudi-spark-minio-trino % docker logs ngrok |grep "started tunnel"
 t=2024-09-09T15:28:51+0000 lvl=info msg="started tunnel" obj=tunnels name=trino addr=//trino:8080 url=tcp://0.tcp.us-cal-1.ngrok.io:11058
 ```
-
-![Screenshot 2024-10-14 at 9 31 02 PM](https://github.com/user-attachments/assets/09d4c526-82c2-4219-bfae-33da8a860099)
-
 
 ### StarRocks
 
