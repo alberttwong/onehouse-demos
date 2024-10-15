@@ -1354,7 +1354,16 @@ Apache XTable is an open-source project that aims to simplify data lake operatio
 
 ### Apache SuperSet
 
-Apache Superset is a powerful open-source data exploration and visualization platform designed to help organizations of all sizes uncover insights from their data. It offers a user-friendly interface that allows users to create interactive dashboards, charts, and reports without extensive technical knowledge.  To get Apache Superset working, just connect Superset to the trino container in this demo environment.  Expose the trino endpoint by modifying the ngrok.yml to enable ngrok on Trino. 
+Apache Superset is a powerful open-source data exploration and visualization platform designed to help organizations of all sizes uncover insights from their data. It offers a user-friendly interface that allows users to create interactive dashboards, charts, and reports without extensive technical knowledge.  To get Apache Superset working, just connect Superset to the trino container in this demo environment.  
+
+1. Add the Trino and StarRocks drivers to the Apache SuperSet docker environment
+```
+albert@albertonehouse superset % cat ./docker/requirements-local.txt
+trino
+starrocks
+```
+
+2. Expose the trino endpoint by modifying the ngrok.yml to enable ngrok on Trino. 
 
 Here is an example of the modifications in ngrok.yml to expose trino to the internet and workstation.
 ```
@@ -1366,11 +1375,16 @@ tunnels:
     proto: tcp
 ```
 
+3. Connect Apache SuperSet to TrinoDB
+
 Put in the trino ngrok URI into the database connection wizard in Apache Superset
 ```
 albert@albertonehouse hudi-spark-minio-trino % docker logs ngrok |grep "started tunnel"
 t=2024-09-09T15:28:51+0000 lvl=info msg="started tunnel" obj=tunnels name=trino addr=//trino:8080 url=tcp://0.tcp.us-cal-1.ngrok.io:11058
 ```
+
+![Screenshot 2024-10-14 at 9 31 02 PM](https://github.com/user-attachments/assets/e7e8a10a-2be3-408a-aadf-f5a2bf3f5d60)
+
 
 ### StarRocks
 
